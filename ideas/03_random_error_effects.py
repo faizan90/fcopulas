@@ -44,9 +44,11 @@ def _get_asymm_2_max(scorr):
 
 def _get_etpy_min(n_bins):
 
-    dens = 1 / n_bins
+#     dens = 1 / n_bins
+#
+#     etpy = -np.log(dens)
 
-    etpy = -np.log(dens)
+    etpy = 0.0
 
     return etpy
 
@@ -85,7 +87,7 @@ def main():
 
     err_type = 'marginals'
 
-    out_fig_name = f'ae_cmpr__{err_type}__{stn}__{beg_time}_{end_time}.png'
+    out_fig_name = f'af_cmpr__{err_type}__{stn}__{beg_time}_{end_time}.png'
 
     in_ser = pd.read_csv(in_file, sep=';', index_col=0)[stn]
 
@@ -104,7 +106,16 @@ def main():
         data = in_ser.values.copy()
 
         if err_type == 'marginals':
-            data += data * err * (-1 + (2 * np.random.random(size=data.size)))
+
+            err_prop = data * err * (
+                -1 + (2 * np.random.random(size=data.size)))
+
+            err_cnst = (-data.min() * 0.5) + (
+                data.min() * np.random.random(size=data.size))
+
+            data += err_prop
+
+            data += err_cnst
 
         elif err_type == 'marginals_flipped':
             idxs = rankdata(data).astype(int)
