@@ -23,7 +23,7 @@ from phsann.misc import roll_real_2arrs
 
 plt.ioff()
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 
 
 def _get_asymm_1_max(scorr):

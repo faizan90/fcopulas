@@ -20,6 +20,18 @@ from mpl_toolkits.mplot3d import Axes3D  # Even though unsed, this has to be imp
 
 DEBUG_FLAG = False
 
+np.set_printoptions(precision=15,
+                    threshold=2000,
+                    linewidth=200000,
+                    formatter={'float': '{:+16.15f}'.format})
+
+# pd.options.display.precision = 3
+# pd.options.display.max_rows = 100
+# pd.options.display.max_columns = 100
+# pd.options.display.width = 250
+
+plot_3d_flag = True
+
 
 def get_distance_from_vector(points, beg_vector, end_vector):
 
@@ -69,6 +81,8 @@ def get_distance_from_vector(points, beg_vector, end_vector):
 
 def get_asymms_nd(data):
 
+    assert np.all(data >= 0) and np.all(data <= 1)
+
     assert data.ndim == 2
 
     n_pts, n_dims = data.shape
@@ -107,12 +121,12 @@ def get_asymms_nd(data):
                 f'AO({i}):',
                 order_asm_beg_corners[i,:], dist_unit,)
 
-            if n_dims == 3:
+            if (n_dims == 3) and plot_3d_flag:
                 asymm_dir_pts[0,:] = order_asm_beg_corners[i,:]
                 asymm_dir_pts[1,:] = order_asm_end_corners[i,:]
 
                 unit_cube_stuff_mayavi(
-                    data, 'test', ['x', 'y', 'z'], c, asymm_dir_pts)
+                    data, 'test', ['x', 'y', 'z'], None, asymm_dir_pts)
 
     if True:
         # Directional asymmetry stuff.
@@ -125,16 +139,16 @@ def get_asymms_nd(data):
             dir_asm_end_corner)
 
         dist_unit = (distances ** 3).mean(axis=0)
-#         dist_unit /= ((dist_unit ** 2).sum() ** 0.5)
+        dist_unit /= ((dist_unit ** 2).sum() ** 0.5)
 
         print('AD   :', dir_asm_beg_corner, dist_unit)
 
-        if n_dims == 3:
+        if (n_dims == 3) and plot_3d_flag:
             asymm_dir_pts[0,:] = dir_asm_beg_corner
             asymm_dir_pts[1,:] = dir_asm_end_corner
 
-#             unit_cube_stuff_mayavi(
-#                 data, 'test', ['x', 'y', 'z'], c, asymm_dir_pts)
+            unit_cube_stuff_mayavi(
+                data, 'test', ['x', 'y', 'z'], None, asymm_dir_pts)
 
     return
 
@@ -182,35 +196,24 @@ def unit_cube_stuff_mayavi(probs, title, ax_labels, c, asymm_dir_pts):
     #         color=(0.5, 0.5, 0.5),
             )
 
-    if c is None:
-        mlab.points3d(
-            probs[:, 0],
-            probs[:, 1],
-            probs[:, 2],
-            opacity=0.3,
-            color=(0, 0, 0),
-            scale_factor=0.05)
-
-    else:
+    if c is not None:
+        line_pts = np.empty((2, 3), dtype=np.float64)
         for i in range(c.shape[0]):
-            line_pts = np.empty((2, 3), dtype=np.float64)
-
             line_pts[0,:] = c[i,:]
             line_pts[1,:] = probs[i,:]
 
             mlab.plot3d(
                 line_pts[:, 0],
                 line_pts[:, 1],
-                line_pts[:, 2],
-                )
+                line_pts[:, 2],)
 
-        mlab.points3d(
-            probs[:, 0],
-            probs[:, 1],
-            probs[:, 2],
-            opacity=0.3,
-            color=(0, 0, 0),
-            scale_factor=0.05)
+    mlab.points3d(
+        probs[:, 0],
+        probs[:, 1],
+        probs[:, 2],
+        opacity=0.3,
+        color=(0, 0, 0),
+        scale_factor=0.05)
 
 #     ax.set_xlabel('x')
 #     ax.set_ylabel('y')
@@ -230,6 +233,17 @@ def unit_cube_stuff_mayavi(probs, title, ax_labels, c, asymm_dir_pts):
     return
 
 
+def get_flipped_vals(data):
+
+    data_sort = np.sort(data)
+
+    flipped_data = data_sort[data.size - np.argsort(np.argsort(data)) - 1]
+
+    print(np.corrcoef(rankdata(data), rankdata(flipped_data)))
+
+    return flipped_data
+
+
 def main():
 
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\asymms_nd')
@@ -240,13 +254,23 @@ def main():
 
     else:
         in_data_file = Path(
-            r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
+            r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
 
         in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
 
-        in_df = in_df[['2446', '1462', '4427']]
+#         in_df = in_df[['2446', '420', '1462', '427']] # Plochingen.
+#         in_df = in_df[['2452', '4422', '3421']] # Enz.
+#         in_df = in_df[['46358', '4428', '3465']] # Kocher.
+#         in_df = in_df[[ '1412', '477', '478', '3470']]  # Jagst.
+#         in_df = in_df[['420', '427', '3421']]
+        in_df = in_df[[ '1412', '478', '3470']]
 
-        in_df = in_df.loc['1990-01-01':'1990-12-31']
+        in_df = in_df.loc['1990-01-01':'2000-12-31']
+
+#         in_df['1412'] = get_flipped_vals(in_df['1412'].values)
+#         in_df['477'] = get_flipped_vals(in_df['477'].values)
+#         in_df['478'] = get_flipped_vals(in_df['478'].values)
+#         in_df['3470'] = get_flipped_vals(in_df['3470'].values)
 
         assert np.all(np.isfinite(in_df.values))
 

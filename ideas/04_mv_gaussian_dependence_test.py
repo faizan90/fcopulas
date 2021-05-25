@@ -34,11 +34,19 @@ def main():
 
     sample_size = int(1e4)
 
+#     covs = np.array([
+#         [1, 0.84, 0.89],
+#         [0.84, 1, 0.87],
+#         [0.89, 0.87, 1]
+#         ], dtype=np.float32)
+
     covs = np.array([
-        [1, 0.84, 0.89],
-        [0.84, 1, 0.87],
-        [0.89, 0.87, 1]
-        ], dtype=np.float32)
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
+        ], dtype=np.float64)
+
+    corr_gau_cnst = 0.0
 
     assert covs.shape[0] == n_dims
     assert covs.shape[1] == n_dims
@@ -58,80 +66,81 @@ def main():
 
     gau_vecs_mod = gau_vecs.copy()
 
-    opt_indics = np.full(sample_size, np.nan)
-
     for i in range(sample_size):
-        if np.all(gau_signs[i] == -1):
-            opt_indics[i] = 0
+#         if np.all(gau_signs[i] == -1):
+#             gau_vecs_mod[i] *= -1
+#
+#         elif np.prod(gau_signs[i]) == -1:
+#             gau_vecs_mod[i] *= gau_signs[i]
 
-            gau_vecs_mod[i] *= -1
+        if np.prod(gau_signs[i]) == 1:
+            gau_vecs_mod[i] *= -gau_signs[i]
 
-        elif np.prod(gau_signs) == -1:
-            opt_indics[i] = 1
+        elif np.prod(gau_signs[i]) == -1:
+            gau_vecs_mod[i] *= gau_signs[i]
 
-            gau_vecs_mod[i] *= -1
-
-        else:
-            opt_indics[i] = -1
+    if corr_gau_cnst > 0:
+        gau_vecs_mod += np.random.normal(
+            size=(gau_vecs.shape[0], 1)) * corr_gau_cnst
 
     gau_probs = rankdata(gau_vecs, axis=0) / (sample_size + 1.0)
 
     gau_mod_probs = rankdata(gau_vecs_mod, axis=0) / (sample_size + 1.0)
 
-    for comb in combinations(np.arange(n_dims), 2):
-        axes = plt.subplots(
-            1,
-            2,
-            squeeze=False,
-            figsize=(10, 5),
-            sharex=True,
-            sharey=True)[1]
-
-        # Gaussian.
-        axes[0, 0].scatter(
-            gau_probs[:, comb[0]],
-            gau_probs[:, comb[1]],
-            c='k',
-            alpha=0.5)
-
-        axes[0, 0].set_xlabel(comb[0])
-        axes[0, 0].set_ylabel(comb[1])
-
-        axes[0, 0].grid()
-        axes[0, 0].set_axisbelow(True)
-
-        # Gaussian modified.
-        axes[0, 1].scatter(
-            gau_mod_probs[:, comb[0]],
-            gau_mod_probs[:, comb[1]],
-            c='k',
-            alpha=0.5)
-
-        axes[0, 1].set_xlabel(comb[0])
-
-        axes[0, 1].grid()
-        axes[0, 1].set_axisbelow(True)
-
-        plt.savefig(f'{comb[0]}_{comb[1]}.png', bbox_inches='tight')
-        plt.close()
-
-    # Gaussian in 3D.
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-
-    ax.scatter(
-        gau_probs[:, 0],
-        gau_probs[:, 1],
-        gau_probs[:, 2],
-        alpha=0.5,
-        c='k')
-
-    plt.grid()
-
-#     plt.show()
-
-    plt.savefig('gau_0_1_2.png', bbox_inches='tight')
-    plt.close()
+#     for comb in combinations(np.arange(n_dims), 2):
+#         axes = plt.subplots(
+#             1,
+#             2,
+#             squeeze=False,
+#             figsize=(10, 5),
+#             sharex=True,
+#             sharey=True)[1]
+#
+#         # Gaussian.
+#         axes[0, 0].scatter(
+#             gau_probs[:, comb[0]],
+#             gau_probs[:, comb[1]],
+#             c='k',
+#             alpha=0.5)
+#
+#         axes[0, 0].set_xlabel(comb[0])
+#         axes[0, 0].set_ylabel(comb[1])
+#
+#         axes[0, 0].grid()
+#         axes[0, 0].set_axisbelow(True)
+#
+#         # Gaussian modified.
+#         axes[0, 1].scatter(
+#             gau_mod_probs[:, comb[0]],
+#             gau_mod_probs[:, comb[1]],
+#             c='k',
+#             alpha=0.5)
+#
+#         axes[0, 1].set_xlabel(comb[0])
+#
+#         axes[0, 1].grid()
+#         axes[0, 1].set_axisbelow(True)
+#
+#         plt.savefig(f'{comb[0]}_{comb[1]}.png', bbox_inches='tight')
+#         plt.close()
+#
+#     # Gaussian in 3D.
+#     fig = plt.figure()
+#     ax = fig.add_subplot(projection='3d')
+#
+#     ax.scatter(
+#         gau_probs[:, 0],
+#         gau_probs[:, 1],
+#         gau_probs[:, 2],
+#         alpha=0.5,
+#         c='k')
+#
+#     plt.grid()
+#
+# #     plt.show()
+#
+#     plt.savefig('gau_0_1_2.png', bbox_inches='tight')
+#     plt.close()
 
     # Gaussian modified in 3D.
     fig = plt.figure()
@@ -144,12 +153,19 @@ def main():
         alpha=0.5,
         c='k')
 
+#     ax.scatter(
+#         gau_vecs_mod[:, 0],
+#         gau_vecs_mod[:, 1],
+#         gau_vecs_mod[:, 2],
+#         alpha=0.5,
+#         c='k')
+
     plt.grid()
 
-#     plt.show()
+    plt.show()
 
-    plt.savefig('gau_0_1_2_mod.png', bbox_inches='tight')
-    plt.close()
+#     plt.savefig('gau_0_1_2_mod.png', bbox_inches='tight')
+#     plt.close()
 
     return
 
