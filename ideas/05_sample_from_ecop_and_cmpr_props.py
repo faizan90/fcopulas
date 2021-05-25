@@ -66,7 +66,7 @@ def _get_etpy_max(n_bins):
     return etpy
 
 
-def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs):
+def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs, idxs_freqs):
 
     ecop_u1_idx = int(u1 * ecop_dens_arrs.shape[0])
 
@@ -74,28 +74,94 @@ def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs):
 
     assert ecop_ps.sum()
 
-    ecop_ps /= ecop_ps.sum()
+    # In case u2s's length is not a multipe of ecop_bins.
+#     ecop_ps /= ecop_ps.sum()
 
     sel_idxs = np.where(ecop_ps)[0]
 
-    ecop_u2_idx = np.random.choice(sel_idxs, p=ecop_ps[sel_idxs])
-
-    idx2 = int(((ecop_u2_idx * (u2s.size + 0))) / ecop_dens_arrs.shape[0])
-
     ratio = u2s.size // ecop_dens_arrs.shape[0]
-    idx2 += np.random.choice(np.arange(ratio))
+
+    new_idxs = []
+    ecops_pss = []
+    for idx, ecop_p in zip(sel_idxs, ecop_ps[sel_idxs]):
+
+        beg = int((idx * u2s.size) / ecop_dens_arrs.shape[0])
+        end = beg + ratio
+
+        new_idxs.extend(list(range(beg, end)))
+        ecops_pss.extend([ecop_p / ratio] * ratio)
+
+    new_idxs = np.array(new_idxs)
+
+    if np.all(idxs_freqs[new_idxs]):
+#         raise ValueError('All ones!')
+        zero_idxs = np.where(idxs_freqs == 0)[0]
+
+        # Fully random selection of next index.
+#         idx2 = np.random.choice(zero_idxs)
+
+        # Nearest that is zero.
+        min_diffs = np.full(zero_idxs.size, np.inf)
+        min_diff_idxs = np.full(zero_idxs.size, zero_idxs.size, dtype=int)
+        for i, zero_idx in enumerate(zero_idxs):
+            diffs = ((zero_idx - new_idxs) ** 2)
+            min_diff = diffs.min()
+
+            if min_diff < min_diffs[i]:
+                min_diffs[i] = min_diff
+                min_diff_idxs[i] = np.argmin(diffs)
+
+        idx2 = zero_idxs[np.argmin(min_diffs)]
+
+    else:
+        sample_idxs = np.where(idxs_freqs[new_idxs] == 0)[0]
+
+        ecops_pss = np.array(ecops_pss)[sample_idxs]
+
+        ecops_pss /= ecops_pss.sum()
+
+#         ctr = 0
+        idx2 = np.random.choice(new_idxs[sample_idxs], p=ecops_pss)
+
+        assert idxs_freqs[idx2] == 0
+
+#         while idxs_freqs[idx2] > 0:
+#             idx2 = np.random.choice(new_idxs, p=ecops_pss)
+#
+#             ctr += 1
+#
+#             if ctr == u2s.size * 100:
+#                 raise Exception('Huh?')
+
+#     ecop_u2_idx = np.random.choice(sel_idxs, p=ecop_ps[sel_idxs])
+# #     ecop_u2_idx = np.random.choice(sel_idxs)
+#
+#     idx2 = int(((ecop_u2_idx * (u2s.size + 0))) / ecop_dens_arrs.shape[0])
+#
+#     ratio_rng = np.arange(ratio)
+#
+#     rand_idx = np.random.choice(ratio_rng)
+#     while (idx2 + rand_idx) == idx1:
+#         rand_idx = np.random.choice(ratio_rng)
+#
+#     idx2 += rand_idx
 
     u2 = ((idx2 + 1) / (u2s.size + 1))
+
+    assert 0 < u2 < 1, u2
 
     return idx2, u2
 
 
-def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs):
+def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no):
+    print('sim:', sim_no)
 
     nvs = u1s.size
 
     # A sampled realization.
-    us = np.empty((nvs, 2), dtype=np.float64)
+    us = np.empty((nvs, 1), dtype=np.float64)
+
+    idxs_freqs = np.zeros(u1s.size, dtype=int)
 
     i = 0
     smpled_idxs = []
@@ -104,21 +170,32 @@ def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs):
             # random idx.
             idx1 = nvs // 2  # choice(np.arange(0, nvs))
             u1 = ((idx1 + 1) / (u1s.size + 1))
+            idxs_freqs[idx1] += 1
 
-            idx2, u2 = get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs)
+            idx2, u2 = get_cond_u2_ecop_2d(
+                u2s, u1, ecop_dens_arrs, idxs_freqs)
 
         else:
             idx1 = idx2
             u1 = u2
+            idxs_freqs[idx1] += 1
 
-            idx2, u2 = get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs)
+            if i == (nvs - 1):
+                pass
 
-        smpled_idxs.append(idx2)
+            else:
+                idx2, u2 = get_cond_u2_ecop_2d(
+                    u2s, u1, ecop_dens_arrs, idxs_freqs)
 
-        us[i,:] = u1, u2
+        smpled_idxs.append(idx1)
+
+        us[i, 0] = u1
 
         i += 1
 
+#     us[:, 0] += -1e-6 + (2e-6 * np.random.random(u1s.size))
+
+    assert np.all(idxs_freqs == 1)
     smpled_idxs = np.array(smpled_idxs)
 
     assert np.all(smpled_idxs >= 0) and np.all(smpled_idxs < u1s.size)
@@ -130,11 +207,10 @@ def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs):
 
     freqs[unq_smpled_idxs] = smpled_idxs_freq
 
-#     return (rankdata(us))[::-1] / (nvs + 1), freqs
+#     return (rankdata(us, axis=0))[::-1] / (u1s.size + 1), freqs
 #     return us[::-1], freqs
 #     return us, freqs
-#     return (rankdata(us, axis=0))[::-1] / (nvs + 1), freqs
-    return us[::-1], freqs
+    return us[::-1,:], freqs
 
 
 def main():
@@ -147,17 +223,18 @@ def main():
     fig_size_a = (12, 8)
     fig_size_b = (15, 8)
 
-    beg_time = '1991-01-01'
+    beg_time = '1997-01-01'
     end_time = '2000-12-31'
 
     stn = '420'
 
-    suff = 'aj'
+    suff = 'ao'
 
     out_name_a = f'{suff}_ecop_props.png'
     out_name_b = f'{suff}_ecops.png'
     out_name_c = f'{suff}_idxs_hist.png'
     out_name_d = f'{suff}_ecop_dens.png'
+    out_name_e = f'{suff}_probs_hist.png'
 
     in_ser = pd.read_csv(in_file, sep=';', index_col=0)[stn]
 
@@ -169,15 +246,18 @@ def main():
 
     vals_sort = np.sort(vals)
 
-    n_sims = 1009
+    n_sims = 20
 
     lag_steps_sample = 1
 
     lag_steps = np.arange(1, 31, dtype=np.int64)
-    ecop_bins = vals.shape[0] // 4  # - lag_steps_sample
+    ecop_bins = vals.shape[0] // 20  # - lag_steps_sample
     ecop_rows = 3
     ecop_cols = 6
-    ecop_lag_step = 1
+    ecop_lag_step = 15
+
+    assert not ((vals.size - lag_steps_sample) % ecop_bins), (
+        'Length of input not a multiple of ecop_bins!')
 
     assert (ecop_rows * ecop_cols) <= (n_sims + 1), (
         'Not enough simulations!')
@@ -237,9 +317,9 @@ def main():
 
     phs_rand_sers = [[us_concate, None]]
 
-    for _ in range(n_sims):
+    for sim_no in range(n_sims):
         phs_rand_sers.append(
-            sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs))
+            sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no))
 
 #     return
 
@@ -249,9 +329,9 @@ def main():
         print(j)
 
         probs = phs_rand_sers[j][0]
+        print(np.unique(probs[:, 0]).size)
 
         if not j:
-
             lclr = 'r'
             lalpha = 0.8
             lw = 1.5
@@ -414,29 +494,28 @@ def main():
     plt.close('all')
 
     # sampled_idxs_hist.
-
     plt.figure()
     plt.bar(np.arange(u1s.size), mean_freqs)
-#     plt.tight_layout()
     plt.savefig(str(out_name_c), bbox_inches='tight', dpi=300)
     plt.close()
 
     plt.figure()
-
-#     pcolmesh_x_coords = np.linspace(-0.5, ecop_bins - 0.5, (ecop_bins + 1))
-#
-#     pcolmesh_y_coords = np.linspace(-0.5, ecop_bins - 0.5, (ecop_bins + 1))
-#
-#     interp_x_crds_plt_msh, interp_y_crds_plt_msh = (
-#         np.meshgrid(pcolmesh_x_coords, pcolmesh_y_coords))
-#
-#     plt.pcolormesh(interp_x_crds_plt_msh, interp_y_crds_plt_msh, ecop_dens_arrs)
-
     plt.imshow(ecop_dens_arrs_main * u1s.size, origin='lower')
     plt.grid()
     plt.gca().set_aspect('equal')
     plt.colorbar()
     plt.savefig(str(out_name_d), bbox_inches='tight', dpi=300)
+    plt.close()
+
+    axes = plt.subplots(1, 2, squeeze=False)[1]
+
+    axes[0, 0].hist(
+        phs_rand_sers[0][0][:, 0], bins=20, range=(0, 1), rwidth=0.8)
+
+    axes[0, 1].hist(
+        phs_rand_sers[1][0][:, 0], bins=20, range=(0, 1), rwidth=0.8)
+
+    plt.savefig(str(out_name_e), bbox_inches='tight', dpi=300)
     plt.close()
     return
 
