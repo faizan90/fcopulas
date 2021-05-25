@@ -66,11 +66,66 @@ def _get_etpy_max(n_bins):
     return etpy
 
 
-def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs, idxs_freqs):
+def get_kernel_ecop_dens(ecop_freqs_arr):
 
-    ecop_u1_idx = int(u1 * ecop_dens_arrs.shape[0])
+    if False:
+        kern_ecop_arr = ecop_freqs_arr.copy()
+        n_bins = ecop_freqs_arr.shape[0]
 
-    ecop_ps = ecop_dens_arrs[ecop_u1_idx,:] * ecop_dens_arrs.shape[0]
+        for i in range(1, n_bins - 1):
+            for j in range(1, n_bins - 1):
+                efreq = ecop_freqs_arr[i, j]
+
+                if not efreq:
+                    continue
+
+                kern_ecop_arr[i - 1:i + 2, j - 1:j + 2] += efreq * 0.25
+
+        for i in range(2, n_bins - 2):
+            for j in range(2, n_bins - 2):
+                efreq = ecop_freqs_arr[i, j]
+
+                if not efreq:
+                    continue
+
+                kern_ecop_arr[i - 2:i + 3, j - 2:j + 3] += efreq * 0.25
+
+        kern_ecop_arr /= kern_ecop_arr.sum()
+
+    elif True:
+        # Gaussian, tri-variate kernel.
+        n_bins = ecop_freqs_arr.shape[0]
+        kern_ecop_arr = np.zeros((n_bins + 2, n_bins + 2))
+
+        kern = (1 / 16) * np.array([
+            [1, 2, 1],
+            [2, 4, 2],
+            [1, 2, 1]
+            ], dtype=float)
+
+        for i in range(0, n_bins):
+            for j in range(0, n_bins):
+                efreq = ecop_freqs_arr[i, j]
+
+                if not efreq:
+                    continue
+
+                kern_ecop_arr[i:i + 3, j:j + 3] += kern * efreq
+
+        kern_ecop_arr = kern_ecop_arr[1:-1, 1:-1].copy(order='c')
+        kern_ecop_arr /= kern_ecop_arr.sum()
+
+    else:
+        kern_ecop_arr = ecop_freqs_arr / ecop_freqs_arr.sum()
+
+    return kern_ecop_arr
+
+
+def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arr, idxs_freqs):
+
+    ecop_u1_idx = int(u1 * ecop_dens_arr.shape[0])
+
+    ecop_ps = ecop_dens_arr[ecop_u1_idx,:] * ecop_dens_arr.shape[0]
 
     assert ecop_ps.sum()
 
@@ -79,13 +134,13 @@ def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs, idxs_freqs):
 
     sel_idxs = np.where(ecop_ps)[0]
 
-    ratio = u2s.size // ecop_dens_arrs.shape[0]
+    ratio = u2s.size // ecop_dens_arr.shape[0]
 
     new_idxs = []
     ecops_pss = []
     for idx, ecop_p in zip(sel_idxs, ecop_ps[sel_idxs]):
 
-        beg = int((idx * u2s.size) / ecop_dens_arrs.shape[0])
+        beg = int((idx * u2s.size) / ecop_dens_arr.shape[0])
         end = beg + ratio
 
         new_idxs.extend(list(range(beg, end)))
@@ -136,7 +191,7 @@ def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs, idxs_freqs):
 #     ecop_u2_idx = np.random.choice(sel_idxs, p=ecop_ps[sel_idxs])
 # #     ecop_u2_idx = np.random.choice(sel_idxs)
 #
-#     idx2 = int(((ecop_u2_idx * (u2s.size + 0))) / ecop_dens_arrs.shape[0])
+#     idx2 = int(((ecop_u2_idx * (u2s.size + 0))) / ecop_dens_arr.shape[0])
 #
 #     ratio_rng = np.arange(ratio)
 #
@@ -153,7 +208,7 @@ def get_cond_u2_ecop_2d(u2s, u1, ecop_dens_arrs, idxs_freqs):
     return idx2, u2
 
 
-def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no):
+def sample_from_ecop_2d(u1s, u2s, ecop_dens_arr, sim_no):
     print('sim:', sim_no)
 
     nvs = u1s.size
@@ -173,7 +228,7 @@ def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no):
             idxs_freqs[idx1] += 1
 
             idx2, u2 = get_cond_u2_ecop_2d(
-                u2s, u1, ecop_dens_arrs, idxs_freqs)
+                u2s, u1, ecop_dens_arr, idxs_freqs)
 
         else:
             idx1 = idx2
@@ -185,7 +240,7 @@ def sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no):
 
             else:
                 idx2, u2 = get_cond_u2_ecop_2d(
-                    u2s, u1, ecop_dens_arrs, idxs_freqs)
+                    u2s, u1, ecop_dens_arr, idxs_freqs)
 
         smpled_idxs.append(idx1)
 
@@ -228,7 +283,7 @@ def main():
 
     stn = '420'
 
-    suff = 'ao'
+    suff = 'aq'
 
     out_name_a = f'{suff}_ecop_props.png'
     out_name_b = f'{suff}_ecops.png'
@@ -251,10 +306,10 @@ def main():
     lag_steps_sample = 1
 
     lag_steps = np.arange(1, 31, dtype=np.int64)
-    ecop_bins = vals.shape[0] // 20  # - lag_steps_sample
+    ecop_bins = vals.shape[0] // 10  # - lag_steps_sample
     ecop_rows = 3
     ecop_cols = 6
-    ecop_lag_step = 15
+    ecop_lag_step = 1
 
     assert not ((vals.size - lag_steps_sample) % ecop_bins), (
         'Length of input not a multiple of ecop_bins!')
@@ -299,7 +354,7 @@ def main():
     etpy_min = _get_etpy_min(ecop_bins)
     etpy_max = _get_etpy_max(ecop_bins)
 
-    ecop_dens_arrs = np.full((ecop_bins, ecop_bins), np.nan, dtype=np.float64)
+    ecop_dens_arr = np.full((ecop_bins, ecop_bins), np.nan, dtype=np.float64)
 
     u1s = rankdata(
         vals[:-lag_steps_sample]) / (vals.shape[0] - lag_steps_sample + 1)
@@ -307,9 +362,10 @@ def main():
     u2s = rankdata(
         vals[+lag_steps_sample:]) / (vals.shape[0] - lag_steps_sample + 1)
 
-    fill_bi_var_cop_dens(u1s, u2s, ecop_dens_arrs)
+    fill_bi_var_cop_dens(u1s, u2s, ecop_dens_arr)
+    ecop_dens_arr = get_kernel_ecop_dens(ecop_dens_arr * u1s.size)
 
-    ecop_dens_arrs_main = ecop_dens_arrs.copy()
+    ecop_dens_arr_main = ecop_dens_arr.copy()
 
     us_concate = np.concatenate(
         (u1s.reshape(-1, 1), u2s.reshape(-1, 1)),
@@ -319,7 +375,7 @@ def main():
 
     for sim_no in range(n_sims):
         phs_rand_sers.append(
-            sample_from_ecop_2d(u1s, u2s, ecop_dens_arrs, sim_no))
+            sample_from_ecop_2d(u1s, u2s, ecop_dens_arr, sim_no))
 
 #     return
 
@@ -380,11 +436,12 @@ def main():
             asymms_2.append(asymm_2)
 
             # ecop etpy.
-            fill_bi_var_cop_dens(probs_i, rolled_probs_i, ecop_dens_arrs)
+            fill_bi_var_cop_dens(probs_i, rolled_probs_i, ecop_dens_arr)
+            ecop_dens_arr = get_kernel_ecop_dens(ecop_dens_arr * u1s.size)
 
-            non_zero_idxs = ecop_dens_arrs > 0
+            non_zero_idxs = ecop_dens_arr > 0
 
-            dens = ecop_dens_arrs[non_zero_idxs]
+            dens = ecop_dens_arr[non_zero_idxs]
 
             etpy_arr = -(dens * np.log(dens))
 
@@ -500,7 +557,7 @@ def main():
     plt.close()
 
     plt.figure()
-    plt.imshow(ecop_dens_arrs_main * u1s.size, origin='lower')
+    plt.imshow(ecop_dens_arr_main * u1s.size, origin='lower')
     plt.grid()
     plt.gca().set_aspect('equal')
     plt.colorbar()
