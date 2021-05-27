@@ -18,10 +18,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import rankdata
 
-from phsann.cyth import get_asymms_sample, fill_bi_var_cop_dens
-from phsann.misc import roll_real_2arrs
+from fcopulas import (
+    sample_from_2d_ecop,
+    get_asymms_sample,
+    fill_bi_var_cop_dens,
+    get_asymm_1_max,
+    get_asymm_2_max,
+    get_etpy_min,
+    get_etpy_max)
 
-from fcopulas import sample_from_2d_ecop
+from phsann.misc import roll_real_2arrs
 
 # randint = np.random.randint
 choice = np.random.choice
@@ -30,42 +36,6 @@ np.set_printoptions(edgeitems=10, linewidth=180)
 plt.ioff()
 
 DEBUG_FLAG = False
-
-
-def _get_asymm_1_max(scorr):
-
-    a_max = (
-        0.5 * (1 - scorr)) * (1 - ((0.5 * (1 - scorr)) ** (1.0 / 3.0)))
-
-    return a_max
-
-
-def _get_asymm_2_max(scorr):
-
-    a_max = (
-        0.5 * (1 + scorr)) * (1 - ((0.5 * (1 + scorr)) ** (1.0 / 3.0)))
-
-    return a_max
-
-
-def _get_etpy_min(n_bins):
-
-#     dens = 1 / n_bins
-#
-#     etpy = -np.log(dens)
-
-    etpy = 0.0 * n_bins
-
-    return etpy
-
-
-def _get_etpy_max(n_bins):
-
-    dens = (1 / (n_bins ** 2))
-
-    etpy = -np.log(dens)
-
-    return etpy
 
 
 def get_kernel_ecop_dens(ecop_freqs_arr):
@@ -304,7 +274,7 @@ def main():
 
     stn = '420'
 
-    suff = 'au'
+    suff = 'ax'
 
     out_name_a = f'{suff}_ecop_props.png'
     out_name_b = f'{suff}_ecops.png'
@@ -329,7 +299,7 @@ def main():
 
     nvs = vals.shape[0] - lag_steps_sample
 
-    n_sims = nvs
+    n_sims = 20
 
     lag_steps = np.arange(1, 31, dtype=np.int64)
     ecop_bins = (vals.shape[0] // 20)  # - lag_steps_sample
@@ -377,8 +347,8 @@ def main():
     ts_ax.set_xlabel('Time step')
     ts_ax.set_ylabel('Discharge ($m^3.s^{-1}$)')
 
-    etpy_min = _get_etpy_min(ecop_bins)
-    etpy_max = _get_etpy_max(ecop_bins)
+    etpy_min = get_etpy_min(ecop_bins)
+    etpy_max = get_etpy_max(ecop_bins)
 
     ecop_dens_arr = np.full((ecop_bins, ecop_bins), np.nan, dtype=np.float64)
 
@@ -458,9 +428,9 @@ def main():
             # asymms.
             asymm_1, asymm_2 = get_asymms_sample(probs_i, rolled_probs_i)
 
-            asymm_1 /= _get_asymm_1_max(scorr)
+            asymm_1 /= get_asymm_1_max(scorr)
 
-            asymm_2 /= _get_asymm_2_max(scorr)
+            asymm_2 /= get_asymm_2_max(scorr)
 
             asymms_1.append(asymm_1)
             asymms_2.append(asymm_2)
