@@ -21,7 +21,7 @@ from scipy.stats import rankdata
 from phsann.cyth import get_asymms_sample, fill_bi_var_cop_dens
 from phsann.misc import roll_real_2arrs
 
-from fcopulas import get_cond_idx2_2d_ecop
+from fcopulas import sample_from_2d_ecop
 
 # randint = np.random.randint
 choice = np.random.choice
@@ -251,7 +251,7 @@ def sample_from_ecop_2d(ecop_dens_arr, nvs, sim_no):
     smpled_idxs = np.zeros(nvs, dtype=np.float64)
 
     # random idx.
-    idx1 = nvs // 2  # 0  # nvs - 1  # choice(np.arange(0, nvs))  #
+    idx1 = sim_no  # nvs // 2  #  nvs - 1  # choice(np.arange(0, nvs))  #
     u1 = ((idx1 + 1) / (nvs + 1))
 
     idxs_freqs[idx1] += 1  # before entering get_cond_u2_ecop_2d.
@@ -304,7 +304,7 @@ def main():
 
     stn = '420'
 
-    suff = 'at'
+    suff = 'au'
 
     out_name_a = f'{suff}_ecop_props.png'
     out_name_b = f'{suff}_ecops.png'
@@ -318,16 +318,21 @@ def main():
 
     in_ser = in_ser.loc[beg_time:end_time]
 
+    np.random.seed((2 ** 32) - 1)
     vals = in_ser.values + (-0.01 + (0.02 * np.random.random(in_ser.shape[0])))
 
     vals_sort = np.sort(vals)
 
-    n_sims = 20
+#     n_sims = 20
 
     lag_steps_sample = 1
 
+    nvs = vals.shape[0] - lag_steps_sample
+
+    n_sims = nvs
+
     lag_steps = np.arange(1, 31, dtype=np.int64)
-    ecop_bins = (vals.shape[0] // 1) - lag_steps_sample
+    ecop_bins = (vals.shape[0] // 20)  # - lag_steps_sample
     ecop_rows = 3
     ecop_cols = 6
     ecop_lag_step = 15
@@ -383,8 +388,6 @@ def main():
     u2s = rankdata(
         vals[+lag_steps_sample:]) / (vals.shape[0] - lag_steps_sample + 1)
 
-    nvs = u1s.shape[0]
-
     fill_bi_var_cop_dens(u1s, u2s, ecop_dens_arr)
     ecop_dens_arr = get_kernel_ecop_dens(ecop_dens_arr * u1s.size)
 
@@ -394,21 +397,25 @@ def main():
 
     beg_t = timeit.default_timer()
     for sim_no in range(n_sims):
-        phs_rand_sers.append(
-            sample_from_ecop_2d(ecop_dens_arr, nvs, sim_no))
+#         phs_rand_sers.append(
+#             sample_from_ecop_2d(ecop_dens_arr, nvs, sim_no))
 
-    print(timeit.default_timer() - beg_t)
-    raise Exception
+        phs_rand_sers.append(
+            sample_from_2d_ecop(ecop_dens_arr, nvs, sim_no))
+
+    print('Took ', timeit.default_timer() - beg_t)
+#     raise Exception
 
 #     return
 
     sampled_idxs = []
     for j in reversed(range(n_sims + 1)):
+#     for j in range(30):
 
-        print(j)
+        print('sim_no:', j)
 
         probs = phs_rand_sers[j][0]
-        print(np.unique(probs).size)
+        print('unqs:', np.unique(probs).size)
 
         if not j:
             lclr = 'r'
@@ -472,6 +479,7 @@ def main():
 
             etpy = (etpy - etpy_min) / (etpy_max - etpy_min)
 
+#             etpy = 0.5
             etpys.append(etpy)
 
             # pcorr.

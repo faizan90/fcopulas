@@ -9,7 +9,12 @@
 ctypedef double DT_D
 ctypedef unsigned long long DT_UL
 
-cpdef tuple get_cond_idx2_2d_ecop(
+# cpdef tuple get_cond_idx2_2d_ecop(
+#         const DT_D[:, ::1] ecop_dens_arr,
+#         const DT_UL[::1] idxs_freqs,
+#         const DT_D u1) except +
+
+cpdef tuple sample_from_2d_ecop(
         const DT_D[:, ::1] ecop_dens_arr,
-        const DT_UL[::1] idxs_freqs,
-        const DT_D u1) except +
+        const DT_UL nvs,
+        const DT_UL init_idx) except +

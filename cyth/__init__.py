@@ -9,4 +9,4 @@ import pyximport
 
 pyximport.install()
 
-from .ecop_sample import get_cond_idx2_2d_ecop
+from .ecop_sample import sample_from_2d_ecop
