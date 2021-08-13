@@ -18,9 +18,10 @@ from scipy.stats import norm
 
 DEBUG_FLAG = False
 
-np.set_printoptions(precision=3,
-                    linewidth=200000,
-                    formatter={'float': '{:+0.3f}'.format})
+np.set_printoptions(
+    precision=3,
+    linewidth=200000,
+    formatter={'float': '{:+0.3f}'.format})
 
 
 def gen_symm_corr_matrix(n_dims, corr_min, corr_max):
