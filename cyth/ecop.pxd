@@ -9,6 +9,9 @@
 ctypedef double DT_D
 ctypedef unsigned long DT_UL
 
+import numpy as np
+cimport numpy as np
+
 
 cpdef void fill_bin_idxs_ts(
         const DT_D[::1] probs,
@@ -52,3 +55,11 @@ cpdef void fill_cumm_dist_from_bivar_emp_dens(
 cpdef DT_D get_etpy_min(DT_UL n_bins) except +
 
 cpdef DT_D get_etpy_max(DT_UL n_bins) except +
+
+cpdef np.ndarray get_nd_ecop(
+        const DT_D[:, ::1] probs, 
+        const unsigned long long n_bins) except +
+
+cpdef get_hist_nd(
+        const DT_D[:, ::1] probs, 
+        unsigned long long n_bins) except +

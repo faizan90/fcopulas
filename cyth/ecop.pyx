@@ -11,6 +11,7 @@ cimport numpy as np
 
 from numpy.math cimport INFINITY
 
+from .misc cimport chk_uexp_ovf
 
 cdef extern from "math.h" nogil:
     cdef:
@@ -442,3 +443,144 @@ cpdef DT_D get_etpy_max(DT_UL n_bins):
     etpy = -log(dens)
 
     return etpy
+
+
+cdef void fill_nd_hist(
+        const DT_D[:, ::1] probs,
+        unsigned long long[::1] hist_nd,
+        unsigned long long n_bins) nogil:
+
+    cdef:
+        unsigned long long i, j, idx_temp, idx, n_vals, n_dims
+
+    n_vals = probs.shape[0]
+    n_dims = probs.shape[1]
+
+    for i in range(n_vals):
+        idx = 0
+        for j in range(n_dims):
+            idx_temp = <unsigned long long> (probs[i, j] * n_bins)
+            idx_temp *= n_bins ** j
+            idx += idx_temp
+
+        hist_nd[idx] += 1
+
+    return
+
+
+cdef void fill_hist_nd_integral(
+        const unsigned long long[::1] hist_nd,
+        unsigned long long[::1] hist_nd_intg,
+        unsigned long long n_dims,
+        unsigned long long n_bins):
+
+    cdef:
+        int sel_flag
+
+        unsigned long long i, j, ctr, cell_intg_freq, idx, n_cells
+
+        unsigned long long[::1] sclrs, ref_cell_idx, cur_cell_idx 
+
+    n_cells = hist_nd.shape[0]
+
+    sclrs = np.zeros(n_dims, dtype=np.uint64)
+    for j in range(n_dims):
+        sclrs[j] = n_bins ** j
+
+    ref_cell_idx = np.empty(n_dims, dtype=np.uint64)
+    cur_cell_idx = np.empty(n_dims, dtype=np.uint64)
+
+    for i in range(n_cells):
+        for j in range(n_dims):
+            ref_cell_idx[j] = (<unsigned long long> (i // sclrs[j])) % n_bins
+
+        ctr = 0
+        cell_intg_freq = 0
+        while ctr <= i:
+            sel_flag = 1
+
+            for j in range(n_dims):
+                cur_cell_idx[j] = (
+                    <unsigned long long> (ctr // sclrs[j])) % n_bins
+
+                if cur_cell_idx[j] > ref_cell_idx[j]:
+                    sel_flag = 0
+                    break
+
+            if sel_flag:
+                idx = 0
+
+                for j in range(n_dims):
+                    idx += cur_cell_idx[j] * sclrs[j]
+
+                cell_intg_freq += hist_nd[idx]    
+
+            ctr += 1
+
+        hist_nd_intg[i] = cell_intg_freq
+
+    return
+
+
+cpdef np.ndarray get_nd_ecop(
+        const DT_D[:, ::1] probs, 
+        unsigned long long n_bins) except +:
+
+    cdef:
+        unsigned long long i, j, n_cells, n_vals, n_dims, idx, idx_temp
+
+        unsigned long long[::1] idxs
+
+        unsigned long long[::1] hist_nd, hist_nd_intg
+
+        DT_D[::1] ecop
+
+    n_vals = probs.shape[0]
+    n_dims = probs.shape[1]
+
+    assert n_vals > 1, 'n_vals too low!'
+    assert n_dims > 1, 'n_dims too low!'
+    assert n_bins > 1, 'n_bins too low!'
+    assert chk_uexp_ovf(n_bins, n_dims) == 0, (
+        'Number of cells for the ecop too large!')
+
+    n_cells = n_bins ** n_dims
+
+    hist_nd = np.zeros(n_cells, dtype=np.uint64)
+    hist_nd_intg = np.zeros(n_cells, dtype=np.uint64)
+
+    fill_nd_hist(probs, hist_nd, n_bins)
+    fill_hist_nd_integral(hist_nd, hist_nd_intg, n_dims, n_bins)
+
+    del hist_nd
+
+    ecop = np.zeros(n_cells, dtype=np.float64)
+    for i in range(n_cells):
+        ecop[i] = <DT_D> hist_nd_intg[i] / n_vals
+
+    return np.asarray(ecop)
+
+
+cpdef get_hist_nd(
+        const DT_D[:, ::1] probs, 
+        unsigned long long n_bins) except +:
+
+    cdef:
+        unsigned long long n_vals, n_dims
+
+        unsigned long long[::1] hist_nd
+
+    n_vals = probs.shape[0]
+    n_dims = probs.shape[1]
+
+    assert n_vals > 1, 'n_vals too low!'
+    assert n_dims > 1, 'n_dims too low!'
+    assert n_bins > 1, 'n_bins too low!'
+    assert chk_uexp_ovf(n_bins, n_dims) == 0, (
+        'Number of cells for the ecop too large!')
+
+    hist_nd = np.zeros(n_bins ** n_dims, dtype=np.uint64)
+
+    fill_nd_hist(probs, hist_nd, n_bins)
+
+    return np.asarray(hist_nd)
