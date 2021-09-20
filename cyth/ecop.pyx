@@ -561,7 +561,7 @@ cpdef np.ndarray get_nd_ecop(
     return np.asarray(ecop)
 
 
-cpdef get_hist_nd(
+cpdef np.ndarray get_hist_nd(
         const DT_D[:, ::1] probs, 
         unsigned long long n_bins) except +:
 

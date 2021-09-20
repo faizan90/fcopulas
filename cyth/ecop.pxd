@@ -60,6 +60,6 @@ cpdef np.ndarray get_nd_ecop(
         const DT_D[:, ::1] probs, 
         const unsigned long long n_bins) except +
 
-cpdef get_hist_nd(
+cpdef np.ndarray get_hist_nd(
         const DT_D[:, ::1] probs, 
         unsigned long long n_bins) except +

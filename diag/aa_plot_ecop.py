@@ -47,9 +47,13 @@ def main():
 #         r"P:\Synchronize\IWS\QGIS_Neckar\spate_cmpr__ppt_cosmo__monthly_scale_calib\03_hbv_figs\kf_01_calib_HBV_sim_420.csv",
 #         sep=';', index_col=0).loc[:, ['q_obs', 'q_sim']].iloc[365:]
 
+#     ser = pd.read_csv(
+#         r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\test_lump_ms_asymm2_01\sim_data_0.csv",
+#         sep=';').loc[:, ['427', '3421']]
+
     ser = pd.read_csv(
-        r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\test_lump_ms_asymm2_01\sim_data_0.csv",
-        sep=';').loc[:, ['427', '3421']]
+        r"P:\Synchronize\Hobby_Projects\aaa_load_cell__drift\mass_drift_temp_ts.csv",
+        sep=';').iloc[:, [0, 1]]
 
     #==========================================================================
     # Auto coula case
@@ -81,12 +85,12 @@ def main():
     plt.grid()
     plt.gca().set_axisbelow(True)
 
-    plt.savefig(
-        r"P:\Synchronize\IWS\Projects\2016_DFG_SPATE\Meetings_Second_Phase\20210311_Online\ecop_ms_ad_lump.png",
-        dpi=600,
-        bbox_inches='tight')
+#     plt.savefig(
+#         r"P:\Synchronize\IWS\Projects\2016_DFG_SPATE\Meetings_Second_Phase\20210311_Online\ecop_ms_ad_lump.png",
+#         dpi=600,
+#         bbox_inches='tight')
 
-#     plt.show()
+    plt.show()
 
     plt.close()
     return

@@ -41,11 +41,11 @@ def main():
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\ecop_nd')
     os.chdir(main_dir)
 
-#     in_data_file = Path(
-#         r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
-
     in_data_file = Path(
-        r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
+        r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
+
+#     in_data_file = Path(
+#         r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
 
     in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
 
@@ -55,9 +55,11 @@ def main():
 #         in_df = in_df[[ '1412', '477', '478', '3470']]  # Jagst.
 #         in_df = in_df[['420', '427', '3421']]
 
-#     in_df = in_df[[ '1412', '478']]
+    in_df = in_df[[ '1412', '478']]
 #     in_df = in_df[[ '1412', '478', '3470']]
-    in_df = in_df[[ '1412', '478', '3470', '427']]
+#     in_df = in_df[[ '1412', '478', '3470', '427']]
+#     in_df = in_df[[ '1412', '478', '3470', '427', '1462']]
+#     in_df = in_df[[ '1412', '478', '3470', '427', '1462', '420']]
 
 #     in_df = in_df[[ '1412', '1412']]  # , '1412']]
 
@@ -85,12 +87,12 @@ def main():
 
     n_vals = probs.shape[0]
 
-    n_bins = 50
+    n_bins = 70
 
     print('Using np.arange as probs!')
-#     probs = np.tile(
-#         np.arange(1, n_vals + 1).reshape(-1, 1),
-#         (1, n_dims)) / (n_vals + 1.0)
+    probs = np.tile(
+        np.arange(1, n_vals + 1).reshape(-1, 1),
+        (1, n_dims)) / (n_vals + 1.0)
 
 #     probs = 1 - probs
 
@@ -98,15 +100,28 @@ def main():
 #     probs[:, 2] = probs[:, 2][::-1]
 
     print('scorr mat:')
-    print(np.corrcoef(probs.T))
+    scorr_mat = np.corrcoef(probs.T)
+    print(scorr_mat)
 
     #==========================================================================
 
     if True:
         print(n_vals, n_dims, n_bins)
-        print(probs)
+#         print(probs)
 
     n_cells = n_bins ** n_dims
+    #==========================================================================
+
+    # Compute mean spearman correlation.
+    mean_corr = []
+    for i in range(n_dims):
+        for j in range(n_dims):
+            if j <= i:
+                continue
+
+            mean_corr.append(scorr_mat[i, j])
+
+    print('mean_scorr:', np.array(mean_corr).mean())
     #==========================================================================
 
     if False:
@@ -159,8 +174,11 @@ def main():
             us_prod = 1.0
             for j in range(n_dims):
                 us_prod *= (((i // sclrs[j]) % n_bins) + 1) / (n_bins + 1.0)
+                idxs[j] = ((i // sclrs[j]) % n_bins)
 
             ecop_pyth[i] = us_prod * ecop[i]
+
+            print(idxs, us_prod)
 
         rho_plus = (n_dims + 1.0) / ((2 ** n_dims) - (n_dims + 1))
         rho_plus *= (((2 ** n_dims) * ecop_pyth.sum()) - 1)
@@ -177,13 +195,19 @@ def main():
         print('scorr cyth:', scorr_cyth, end_time - beg_time)
 
     if True:
-        beg_time = timeit.default_timer()
+
+#         beg_time = timeit.default_timer()
+
         ecop_hist = get_hist_nd(probs, n_bins)
+
+        beg_time = timeit.default_timer()
+
         rho_plus_cyth = get_srho_plus_for_hist_nd(
             ecop_hist,
             n_dims,
             n_bins,
             n_vals)
+
         end_time = timeit.default_timer()
 
         print('rho_plus_cyth:', rho_plus_cyth, end_time - beg_time)

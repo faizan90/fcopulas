@@ -31,7 +31,7 @@ cpdef get_srho_for_ecop_nd(
 
     scorr = (n_dims + 1.0) / (<DT_D> ((2 ** n_dims) - n_dims - 1.0))
 
-    scorr *= (((2 ** n_dims) * (cudus)) - 1)
+    scorr *= ((2 ** n_dims) * cudus) - 1
     return scorr
 
 
@@ -44,6 +44,7 @@ cpdef get_srho_plus_for_hist_nd(
     '''
     From: Nonparametric Measures of Multivariate Association, Nelson 1996.
     '''
+
     cdef:
         unsigned long long i, j, n_cells
 
@@ -57,15 +58,22 @@ cpdef get_srho_plus_for_hist_nd(
 
     n_cells = hist.shape[0]
 
-    udcu = 0.0  # Product of u1...un and dC(u).
+    udcu = 0.0  # Integral of the product of u1...un and dC(u).
     for i in range(n_cells):
+
+        # This makes a real difference in speed.
+        if hist[i] == 0:
+            continue
+
         us_prod = 1.0
         for j in range(n_dims):
-            us_prod *= (((i // sclrs[j]) % n_bins) + 1) / <DT_D> (n_bins + 1)
+            # Using already computed 'us' from an array resulted in a slight
+            # slowdown instead of an increase in speed.
+            us_prod *= (((i // sclrs[j]) % n_bins) + 1) / <DT_D> (n_bins + 1.0)
 
-        udcu += (us_prod * hist[i]) / n_vals
+        udcu += us_prod * (hist[i] / <DT_D> n_vals)
 
-    scorr = (n_dims + 1.0) / (<DT_D> ((2 ** n_dims) - (n_dims + 1.0)))
+    scorr = (n_dims + 1.0) / (<DT_D> ((2 ** n_dims) - n_dims - 1.0))
     scorr *= ((2 ** n_dims) * udcu) - 1
 
     return scorr

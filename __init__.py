@@ -31,4 +31,9 @@ from .cyth import (
     # Spearman's correlation.
     get_srho_for_ecop_nd,
     get_srho_plus_for_hist_nd,
+
+    # Entropy.
+    get_etpy_nd,
+    get_etpy_min_nd,
+    get_etpy_max_nd,
     )
