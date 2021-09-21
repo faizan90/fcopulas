@@ -57,11 +57,11 @@ cpdef DT_D get_etpy_min_nd(
 
     assert n_dims >= 2
 
-    dens = 1.0 / <DT_D> n_bins
+    #dens = 1.0 / <DT_D> n_bins
 
-    etpy = -log(dens)
+    #etpy = -log(dens)
 
-#     etpy = 0.0
+    etpy = 0.0
 
     return etpy
 

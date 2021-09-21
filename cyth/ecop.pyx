@@ -424,7 +424,7 @@ cpdef DT_D get_etpy_min(DT_UL n_bins) except +:
     cdef:
         DT_D dens, etpy
 
-#     dens = 1 / n_bins
+#     dens = 1 / <DT_D> n_bins
 #
 #     etpy = -log(dens)
 
@@ -438,7 +438,7 @@ cpdef DT_D get_etpy_max(DT_UL n_bins):
     cdef:
         DT_D dens, etpy
 
-    dens = (1 / (n_bins ** 2))
+    dens = (1 / <DT_D> (n_bins ** 2))
 
     etpy = -log(dens)
 
