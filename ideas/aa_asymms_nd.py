@@ -20,17 +20,22 @@ from mpl_toolkits.mplot3d import Axes3D  # Even though unsed, this has to be imp
 
 DEBUG_FLAG = False
 
+# np.set_printoptions(precision=15,
+#                     threshold=2000,
+#                     linewidth=200000,
+#                     formatter={'float': '{:+16.15f}'.format})
+
 np.set_printoptions(precision=15,
                     threshold=2000,
                     linewidth=200000,
-                    formatter={'float': '{:+16.15f}'.format})
+                    formatter={'float': '{:+6.4f}'.format})
 
 # pd.options.display.precision = 3
 # pd.options.display.max_rows = 100
 # pd.options.display.max_columns = 100
 # pd.options.display.width = 250
 
-plot_3d_flag = True
+plot_3d_flag = False
 
 
 def get_distance_from_vector(points, beg_vector, end_vector):
@@ -76,7 +81,7 @@ def get_distance_from_vector(points, beg_vector, end_vector):
     # Length of the vector.
 #     print((d ** 2).sum(axis=1) ** 0.5)
 
-    return d, c
+    return np.round(d, 15), np.round(c, 15)
 
 
 def get_asymms_nd(data):
@@ -117,9 +122,13 @@ def get_asymms_nd(data):
             dist_unit = (distances ** 3).mean(axis=0)
             dist_unit /= ((dist_unit ** 2).sum() ** 0.5)
 
+            dist_unit_dist = ((dist_unit ** 2).sum()) ** 0.5
+
             print(
                 f'AO({i}):',
-                order_asm_beg_corners[i,:], dist_unit,)
+                order_asm_beg_corners[i,:],
+                dist_unit,
+                round(dist_unit_dist, 4))
 
             if (n_dims == 3) and plot_3d_flag:
                 asymm_dir_pts[0,:] = order_asm_beg_corners[i,:]
@@ -141,7 +150,13 @@ def get_asymms_nd(data):
         dist_unit = (distances ** 3).mean(axis=0)
         dist_unit /= ((dist_unit ** 2).sum() ** 0.5)
 
-        print('AD   :', dir_asm_beg_corner, dist_unit)
+        dist_unit_dist = ((dist_unit ** 2).sum()) ** 0.5
+
+        print(
+            'AD   :',
+            dir_asm_beg_corner,
+            dist_unit,
+            round(dist_unit_dist, 4))
 
         if (n_dims == 3) and plot_3d_flag:
             asymm_dir_pts[0,:] = dir_asm_beg_corner
@@ -244,17 +259,47 @@ def get_flipped_vals(data):
     return flipped_data
 
 
+def lag_var(in_arr, fin_lag):
+
+    assert isinstance(in_arr, np.ndarray)
+    assert in_arr.ndim == 2
+
+    assert isinstance(fin_lag, int)
+    assert fin_lag >= 0
+
+    assert in_arr.shape[1]
+    assert in_arr.shape[0] > fin_lag
+
+    if not fin_lag:
+        out_arr = in_arr.copy()
+
+    else:
+        out_arr = []
+
+        for i in range(fin_lag):
+            out_arr.append(in_arr[i:-(fin_lag - i)])
+
+        out_arr = np.concatenate(out_arr, axis=1)
+
+    return out_arr
+
+
 def main():
 
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\asymms_nd')
     os.chdir(main_dir)
 
-    if False:
-        get_asymms_nd(np.repeat(np.linspace(0, 1, 1000), 3).reshape(-1, 3))
+    sim_type = 3
 
-    else:
+    if sim_type == 1:
+        get_asymms_nd(np.repeat(np.linspace(0, 1, 1000), 5).reshape(-1, 5))
+
+    elif sim_type == 2:
+#         in_data_file = Path(
+#             r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
+
         in_data_file = Path(
-            r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
+            r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
 
         in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
 
@@ -263,9 +308,11 @@ def main():
 #         in_df = in_df[['46358', '4428', '3465']] # Kocher.
 #         in_df = in_df[[ '1412', '477', '478', '3470']]  # Jagst.
 #         in_df = in_df[['420', '427', '3421']]
-        in_df = in_df[[ '1412', '478', '3470']]
+#         in_df = in_df[[ '1412', '478', '3470']]
 
-        in_df = in_df.loc['1990-01-01':'2000-12-31']
+        in_df = in_df[['420', '478']]
+
+#         in_df = in_df.loc['2000-01-01':'2015-12-31']
 
 #         in_df['1412'] = get_flipped_vals(in_df['1412'].values)
 #         in_df['477'] = get_flipped_vals(in_df['477'].values)
@@ -277,12 +324,32 @@ def main():
         # Station cmpr.
         in_data = in_df.values
 
+        in_data = lag_var(in_data[:, 0].reshape(-1, 1), 10)
+
         in_probs = np.apply_along_axis(
             rankdata, 0, in_data) / (in_data.shape[0] + 1.0)
 
         get_asymms_nd(in_probs)
 
     #     unit_cube_stuff_mayavi(in_probs, 'observed', in_df.columns)
+
+    elif sim_type == 3:
+        in_data_file = Path(r'mvn_auto_420_10.csv')
+
+        in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
+
+        assert np.all(np.isfinite(in_df.values))
+
+        in_data = in_df.values
+
+        in_probs = np.apply_along_axis(
+            rankdata, 0, in_data) / (in_data.shape[0] + 1.0)
+
+        get_asymms_nd(in_probs)
+
+    else:
+        raise ValueError(f'Unknown sim_type: {sim_type}!')
+
     return
 
 
