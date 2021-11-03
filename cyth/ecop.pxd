@@ -56,7 +56,7 @@ cpdef DT_D get_etpy_min(DT_UL n_bins) except +
 
 cpdef DT_D get_etpy_max(DT_UL n_bins) except +
 
-cpdef np.ndarray get_nd_ecop(
+cpdef np.ndarray get_ecop_nd(
         const DT_D[:, ::1] probs, 
         const unsigned long long n_bins) except +
 

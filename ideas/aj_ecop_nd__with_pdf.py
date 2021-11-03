@@ -19,7 +19,7 @@ from scipy.stats import rankdata
 import matplotlib.pyplot as plt; plt.ioff()
 
 from fcopulas import (
-    get_nd_ecop,
+    get_ecop_nd,
     get_srho_for_ecop_nd,
     get_srho_plus_for_hist_nd,
     get_hist_nd)
@@ -188,7 +188,7 @@ def main():
 
     if False:
         beg_time = timeit.default_timer()
-        ecop_cyth = get_nd_ecop(probs, n_bins)
+        ecop_cyth = get_ecop_nd(probs, n_bins)
         scorr_cyth = get_srho_for_ecop_nd(ecop_cyth, n_dims)
         end_time = timeit.default_timer()
 

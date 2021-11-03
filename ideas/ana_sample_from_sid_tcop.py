@@ -219,8 +219,8 @@ def get_sid_tcop_probs_auto(args):
 
     Ws = np.empty((N, 2))
 
-    Ws[:, 0] = rv1.ppf(1 - Ss)
-    Ws[:, 1] = rv2.ppf(1 - Ss)
+    Ws[:, 0] = rv1.ppf(Ss)
+    Ws[:, 1] = rv2.ppf(Ss)
     for i in range(1, N):
         Ws[i,:] += Ws[i - 1,:] * pcorr
 
@@ -265,7 +265,7 @@ def main():
 
     # Skewness constants.
     # Apparently, for order asymm.
-    Gs = np.array([-1.0, -1.0, ])
+    Gs = np.array([-0.0, -0.0, ])
 
     # Copula type
     # cop_type = 'cross'
@@ -275,13 +275,15 @@ def main():
     if cop_type == 'cross':
         probs = get_sid_tcop_probs_cross((pcorr, mean, cov, nu1, nu2, N, *Gs))
 
+        plt.scatter(probs[:, 0], probs[:, 1], alpha=10 / 255.0)
+
     elif cop_type == 'auto':
         probs = get_sid_tcop_probs_auto((pcorr, mean, cov, nu1, nu2, N, *Gs))
 
+        plt.scatter(probs[:-1], probs[1:], alpha=10 / 255.0)
+
     else:
         raise ValueError(f'Unknown cop_type: {cop_type}!')
-
-    plt.scatter(probs[:, 0], probs[:, 1], alpha=10 / 255.0)
 
     plt.title(
         f'Copula type: {cop_type}\n'

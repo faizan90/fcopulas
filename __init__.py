@@ -17,7 +17,7 @@ from .cyth import (
     sample_from_2d_ecop,
     get_etpy_min,
     get_etpy_max,
-    get_nd_ecop,
+    get_ecop_nd,
     get_hist_nd,
 
     # Asymmetry stuff.

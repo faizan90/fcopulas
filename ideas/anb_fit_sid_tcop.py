@@ -88,17 +88,17 @@ def main():
     read_col = '454'
 
     # Copula stuff.
-    n_bins = 20
+    n_bins = 10
 
-    max_lag = 20
+    max_lag = 10
 
-    wts_prms = np.array([1.0, 5.0, 5.0, 0.0])
+    wts_prms = np.array([1.0, 1.0, 0.0, 0.0])
 
-    shift_prms = np.array([+0.001, -0.001, -0.001, -0.001])
+    shift_prms = np.array([+0.000, -0.200, -0.000, -0.000])
 
     # Optimization parameters.
     n_cpus = 8
-    max_iters = 100
+    max_iters = 1000
     opt_tol = 0.01
 
     # Copula type to evaluate.
@@ -248,8 +248,8 @@ def main():
     # Temporal props.
     axes = plt.subplots(2, 3, squeeze=False, figsize=None)[1]
 
-    plot_props(in_probs.reshape(-1, 1), 20, n_bins, axes, 'r', 'ref')
-    plot_props(sim_probs.reshape(-1, 1), 20, n_bins, axes, 'b', 'sim')
+    plot_props(in_probs.reshape(-1, 1), max_lag, n_bins, axes, 'r', 'ref')
+    plot_props(sim_probs.reshape(-1, 1), max_lag, n_bins, axes, 'b', 'sim')
 
     # For now.
     axes[0, 2].set_axis_off()

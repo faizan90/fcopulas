@@ -18,14 +18,14 @@ import pandas as pd
 from scipy.stats import rankdata
 import matplotlib.pyplot as plt; plt.ioff()
 
-from fcopulas import get_nd_ecop, get_srho_for_ecop_nd
+from fcopulas import (
+    get_ecop_nd, get_hist_nd, get_srho_for_ecop_nd, get_srho_plus_for_hist_nd)
 
 DEBUG_FLAG = False
 
 np.set_printoptions(
-    precision=3,
     linewidth=200000,
-    formatter={'float': '{:+0.3f}'.format})
+    formatter={'float': '{:+0.5f}'.format})
 
 
 def main():
@@ -39,6 +39,9 @@ def main():
     in_data_file = Path(
         r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
 
+    # in_data_file = Path(
+    #     r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
+
     in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
 
 #         in_df = in_df[['2446', '420', '1462', '427']] # Plochingen.
@@ -47,23 +50,16 @@ def main():
 #         in_df = in_df[[ '1412', '477', '478', '3470']]  # Jagst.
 #         in_df = in_df[['420', '427', '3421']]
 
-#     in_df = in_df[[ '1412', '478']]
+    # in_df = in_df[[ '1412', '478']]
     in_df = in_df[[ '1412', '478', '3470']]
-#     in_df = in_df[[ '1412', '478', '3470', '427']]
-
-#     in_df = in_df[[ '1412', '1412']]  # , '1412']]
-
-#     in_df = in_df.loc['1990-01-01':'2000-12-31']
-
-#         in_df['1412'] = get_flipped_vals(in_df['1412'].values)
-#         in_df['477'] = get_flipped_vals(in_df['477'].values)
-#         in_df['478'] = get_flipped_vals(in_df['478'].values)
-#         in_df['3470'] = get_flipped_vals(in_df['3470'].values)
+    # in_df = in_df[[ '1412', '478', '3470', '427']]
 
     assert np.all(np.isfinite(in_df.values))
 
     # Station cmpr.
     in_data = in_df.values
+
+    # in_data = in_data[:30,:]
 
     probs = np.apply_along_axis(
         rankdata, 0, in_data) / (in_data.shape[0] + 1.0)
@@ -77,22 +73,55 @@ def main():
 
     n_vals = probs.shape[0]
 
-    n_bins = 30
+    n_bins = 50
 
-#     print('scorr mat:')
-#     print(np.corrcoef(probs.T))
-
-    print('Using np.arange as probs!')
-    probs = np.tile(
-        np.arange(1, n_vals + 1).reshape(-1, 1),
-        (1, n_dims)) / (n_vals + 1.0)
-
+    if False:
+        print('Using np.arange as probs!')
+        probs = np.tile(
+            np.arange(1, n_vals + 1).reshape(-1, 1),
+            (1, n_dims)) / (n_vals + 1.0)
     #==========================================================================
 
-    if True:
+    print('scorr mat:')
+    print(np.corrcoef(probs.T))
+
+    if False:
         print(n_vals, n_dims, n_bins)
         print(probs)
     #==========================================================================
+
+    if True:
+        beg_time = timeit.default_timer()
+        ecop_cyth = get_ecop_nd(probs, n_bins)
+        end_time = timeit.default_timer()
+
+        print(f'\necop_cyth took: {end_time - beg_time:0.5f} seconds.')
+        #======================================================================
+
+        beg_time = timeit.default_timer()
+        scorr_cyth = get_srho_for_ecop_nd(ecop_cyth, n_dims)
+        end_time = timeit.default_timer()
+
+        print(f'scorr_cyth_ecop took: {end_time - beg_time:0.5f} seconds.')
+
+        print('scorr ecop cyth:', scorr_cyth)
+
+    if True:
+        beg_time = timeit.default_timer()
+        hist_cyth = get_hist_nd(probs, n_bins)
+        end_time = timeit.default_timer()
+
+        print(f'\nhist_cyth took: {end_time - beg_time:0.5f} seconds.')
+        #======================================================================
+
+        beg_time = timeit.default_timer()
+        scorr_cyth_hist = get_srho_plus_for_hist_nd(
+            hist_cyth, n_dims, n_bins, n_vals)
+        end_time = timeit.default_timer()
+
+        print(f'scorr_cyth_hist took: {end_time - beg_time:0.5f} seconds.')
+
+        print('scorr cyth hist:', scorr_cyth_hist)
 
 #     # Compute relative frequencies for the empirical copula.
 #     beg_time = timeit.default_timer()
@@ -451,25 +480,6 @@ def main():
 #
 #     assert np.all(np.isclose(cudus, cudus_fast))
     #==========================================================================
-
-#     beg_time = timeit.default_timer()
-#
-    ecop_cyth = get_nd_ecop(probs, n_bins)
-#
-#     end_time = timeit.default_timer()
-#
-#     print(ecop_cyth)
-#     print(f'Ecop_cyth took: {end_time - beg_time:0.5f} seconds.')
-#
-#     assert np.all(np.isclose(ecop_cyth, cudus))
-#
-#     scorr_pyth = get_srho_for_ecop_nd(cudus, n_dims)
-#     scorr_pyth_fast = get_srho_for_ecop_nd(cudus_fast, n_dims)
-    scorr_cyth = get_srho_for_ecop_nd(ecop_cyth, n_dims)
-#
-#     print('scorr pyth:', scorr_pyth)
-#     print('scorr pyth_fast:', scorr_pyth_fast)
-    print('scorr cyth:', scorr_cyth)
 
 #     cudus_reshape = cudus.reshape(*[n_bins] * n_dims)
 #

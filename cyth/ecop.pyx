@@ -433,7 +433,7 @@ cpdef DT_D get_etpy_min(DT_UL n_bins) except +:
     return etpy
 
 
-cpdef DT_D get_etpy_max(DT_UL n_bins):
+cpdef DT_D get_etpy_max(DT_UL n_bins) except +:
 
     cdef:
         DT_D dens, etpy
@@ -445,10 +445,10 @@ cpdef DT_D get_etpy_max(DT_UL n_bins):
     return etpy
 
 
-cdef void fill_nd_hist(
+cdef void fill_hist_nd(
         const DT_D[:, ::1] probs,
         unsigned long long[::1] hist_nd,
-        unsigned long long n_bins) nogil:
+        unsigned long long n_bins) nogil except +:
 
     cdef:
         unsigned long long i, j, idx_temp, idx, n_vals, n_dims
@@ -472,7 +472,7 @@ cdef void fill_hist_nd_integral(
         const unsigned long long[::1] hist_nd,
         unsigned long long[::1] hist_nd_intg,
         unsigned long long n_dims,
-        unsigned long long n_bins):
+        unsigned long long n_bins) except +:
 
     cdef:
         int sel_flag
@@ -522,7 +522,177 @@ cdef void fill_hist_nd_integral(
     return
 
 
-cpdef np.ndarray get_nd_ecop(
+cdef int shift_by_one_ign(
+        unsigned long long[::1] shift_idxs,
+        const unsigned long long[::1] max_idxs, 
+        const unsigned long long ignore_idx) except +:
+
+    cdef:
+        int chg_flag = 0
+
+        unsigned long long i, j, idx, n_dims
+
+    n_dims = shift_idxs.shape[0]
+
+    for i in range(n_dims):
+
+        if shift_idxs[i] > max_idxs[i]:
+            continue
+
+        if i == ignore_idx:
+            continue
+
+        chg_flag = 1
+
+        shift_idxs[i] += 1
+
+        idx = i
+
+        while True:
+            if shift_idxs[idx] > max_idxs[idx]:
+                for j in range(idx + 1):
+
+                    if j == ignore_idx:
+                        continue
+
+                    shift_idxs[j] = 0
+
+                idx += 1
+
+                if idx == ignore_idx:
+                    idx += 1
+
+                if idx == n_dims:
+                    break
+
+                shift_idxs[idx] += 1
+
+            else:
+                break
+
+        break
+
+    return chg_flag
+
+
+cdef void fill_hist_nd_integral_v2(
+        const unsigned long long[::1] hist_nd,
+        unsigned long long[::1] hist_nd_intg,
+        const unsigned long long n_dims,
+        const unsigned long long n_bins) except +:
+
+    cdef:
+        int take_cond
+
+        unsigned long long i, j, k, cell_intg_freq, n_cells, idx
+
+        unsigned long long pre_cell_idx
+
+        unsigned long long[::1] sclrs, ref_cell_idx
+
+        unsigned long long[::1] shift_idxs, vsted_cells, max_idxs
+
+    n_cells = hist_nd.shape[0]
+
+    sclrs = np.zeros(n_dims, dtype=np.uint64)
+    for j in range(n_dims):
+        sclrs[j] = n_bins ** j
+
+    ref_cell_idx = np.empty(n_dims, dtype=np.uint64)
+
+    shift_idxs = np.empty(n_dims, dtype=np.uint64)
+
+    vsted_cells = np.empty(n_cells, dtype=np.uint64)
+
+    max_idxs = np.empty(n_cells, dtype=np.uint64)
+
+    for i in range(n_cells):
+        pre_cell_idx = 0
+        for j in range(n_dims):
+            ref_cell_idx[j] = (<unsigned long long> (i // sclrs[j])) % n_bins
+
+            if ref_cell_idx[j] <= 1:
+                continue
+
+            pre_cell_idx += (ref_cell_idx[j] - 1) * sclrs[j] 
+
+        cell_intg_freq = hist_nd_intg[pre_cell_idx]
+
+        for j in range(i):
+            vsted_cells[j] = 0
+
+        for j in range(n_dims):
+
+            if not ref_cell_idx[j]:
+                continue
+
+            for k in range(n_dims):
+                max_idxs[k] = ref_cell_idx[k]
+                shift_idxs[k] = 0
+
+            if (j + 1) == n_dims:
+                if max_idxs[0]:
+                    max_idxs[0] -= 1
+
+                # else:
+                #     continue
+            else:
+                if max_idxs[j + 1]:
+                    max_idxs[j + 1] -= 1
+
+                # else:
+                #     continue
+
+            shift_idxs[j] = ref_cell_idx[j]
+
+            take_cond = 0
+            for k in range(n_dims):
+                if max_idxs[k] == shift_idxs[k]:
+                    continue
+
+                take_cond = 1
+                break
+
+            while take_cond:
+                idx = 0
+                for k in range(n_dims):
+                    idx += shift_idxs[k] * sclrs[k]
+
+                if not vsted_cells[idx]:
+                    cell_intg_freq += hist_nd[idx]
+
+                    vsted_cells[idx] += 1
+
+                if shift_by_one_ign(shift_idxs, ref_cell_idx, j):
+                    pass
+
+                else:
+                    break
+
+                take_cond = 0
+                for k in range(n_dims):
+                    if ref_cell_idx[k] == shift_idxs[k]:
+                        continue
+
+                    take_cond = 1
+                    break
+
+            idx = 0
+            for k in range(n_dims):
+                idx += shift_idxs[k] * sclrs[k]
+
+            if idx != i:
+                if not vsted_cells[idx]:
+                    cell_intg_freq += hist_nd[idx]
+    
+                    vsted_cells[idx] += 1
+
+        hist_nd_intg[i] = cell_intg_freq + hist_nd[i]
+
+    return
+
+
+cpdef np.ndarray get_ecop_nd(
         const DT_D[:, ::1] probs, 
         unsigned long long n_bins) except +:
 
@@ -549,14 +719,17 @@ cpdef np.ndarray get_nd_ecop(
     hist_nd = np.zeros(n_cells, dtype=np.uint64)
     hist_nd_intg = np.zeros(n_cells, dtype=np.uint64)
 
-    fill_nd_hist(probs, hist_nd, n_bins)
-    fill_hist_nd_integral(hist_nd, hist_nd_intg, n_dims, n_bins)
+    fill_hist_nd(probs, hist_nd, n_bins)
+    # fill_hist_nd_integral(hist_nd, hist_nd_intg, n_dims, n_bins)
+    fill_hist_nd_integral_v2(hist_nd, hist_nd_intg, n_dims, n_bins)
+
+    # return np.asarray(hist_nd_intg)
 
     del hist_nd
 
     ecop = np.zeros(n_cells, dtype=np.float64)
     for i in range(n_cells):
-        ecop[i] = <DT_D> hist_nd_intg[i] / n_vals
+        ecop[i] = hist_nd_intg[i] / <DT_D> n_vals
 
     return np.asarray(ecop)
 
@@ -581,6 +754,6 @@ cpdef np.ndarray get_hist_nd(
 
     hist_nd = np.zeros(n_bins ** n_dims, dtype=np.uint64)
 
-    fill_nd_hist(probs, hist_nd, n_bins)
+    fill_hist_nd(probs, hist_nd, n_bins)
 
     return np.asarray(hist_nd)

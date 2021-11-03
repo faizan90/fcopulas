@@ -69,7 +69,8 @@ cpdef get_srho_plus_for_hist_nd(
         for j in range(n_dims):
             # Using already computed 'us' from an array resulted in a slight
             # slowdown instead of an increase in speed.
-            us_prod *= (((i // sclrs[j]) % n_bins) + 1) / <DT_D> (n_bins + 1.0)
+            us_prod *= (
+                ((i // sclrs[j]) % n_bins) + 1.0) / <DT_D> (n_bins + 0.0)
 
         udcu += us_prod * (hist[i] / <DT_D> n_vals)
 
