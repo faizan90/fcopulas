@@ -19,7 +19,7 @@ from scipy.stats import rankdata
 import matplotlib.pyplot as plt; plt.ioff()
 
 from fcopulas import (
-    get_ecop_nd, get_hist_nd, get_srho_for_ecop_nd, get_srho_plus_for_hist_nd)
+    get_ecop_nd, get_hist_nd, get_srho_minus_for_ecop_nd, get_srho_plus_for_hist_nd)
 
 DEBUG_FLAG = False
 
@@ -30,17 +30,14 @@ np.set_printoptions(
 
 def main():
 
-    main_dir = Path(os.getcwd())
-    os.chdir(main_dir)
-
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\ecop_nd')
     os.chdir(main_dir)
 
-    in_data_file = Path(
-        r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
-
     # in_data_file = Path(
-    #     r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
+    #     r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
+
+    in_data_file = Path(
+        r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
 
     in_df = pd.read_csv(in_data_file, sep=';', index_col=0)
 
@@ -68,6 +65,7 @@ def main():
 #     probs[:, 1] = 1 - probs[:, 1][::-1]
 
     probs = probs.copy('c')
+    # probs = (1 - probs).copy('c')
 
     n_dims = probs.shape[1]
 
@@ -75,11 +73,15 @@ def main():
 
     n_bins = 50
 
-    if False:
+    if True:
         print('Using np.arange as probs!')
         probs = np.tile(
             np.arange(1, n_vals + 1).reshape(-1, 1),
             (1, n_dims)) / (n_vals + 1.0)
+
+    # probs[:, 0] = 1 - probs[:, 0]
+    # probs[:, 1] = 1 - probs[:, 1]
+    # probs[:, 2] = 1 - probs[:, 2]
     #==========================================================================
 
     print('scorr mat:')
@@ -99,14 +101,14 @@ def main():
         #======================================================================
 
         beg_time = timeit.default_timer()
-        scorr_cyth = get_srho_for_ecop_nd(ecop_cyth, n_dims)
+        scorr_cyth = get_srho_minus_for_ecop_nd(ecop_cyth, n_dims)
         end_time = timeit.default_timer()
 
         print(f'scorr_cyth_ecop took: {end_time - beg_time:0.5f} seconds.')
 
         print('scorr ecop cyth:', scorr_cyth)
 
-    if True:
+    if False:
         beg_time = timeit.default_timer()
         hist_cyth = get_hist_nd(probs, n_bins)
         end_time = timeit.default_timer()

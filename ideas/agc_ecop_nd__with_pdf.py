@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt; plt.ioff()
 
 from fcopulas import (
     get_ecop_nd,
-    get_srho_for_ecop_nd,
+    get_srho_minus_for_ecop_nd,
     get_srho_plus_for_hist_nd,
     get_hist_nd)
 
@@ -35,7 +35,7 @@ np.set_printoptions(
 def main():
 
     '''
-    The lower orthant (rho_minus) seems to rho_plus with 1-probs as the input.
+    The lower orthant (rho_minus) is rho_plus with 1 - probs as the input.
     '''
 
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\ecop_nd')
@@ -189,7 +189,7 @@ def main():
     if False:
         beg_time = timeit.default_timer()
         ecop_cyth = get_ecop_nd(probs, n_bins)
-        scorr_cyth = get_srho_for_ecop_nd(ecop_cyth, n_dims)
+        scorr_cyth = get_srho_minus_for_ecop_nd(ecop_cyth, n_dims)
         end_time = timeit.default_timer()
 
         print('scorr cyth:', scorr_cyth, end_time - beg_time)

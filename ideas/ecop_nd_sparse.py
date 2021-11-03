@@ -19,7 +19,7 @@ from scipy.stats import rankdata
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt; plt.ioff()
 
-from fcopulas import get_ecop_nd, get_srho_for_ecop_nd
+from fcopulas import get_ecop_nd, get_srho_minus_for_ecop_nd
 
 DEBUG_FLAG = False
 

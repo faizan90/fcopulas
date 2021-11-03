@@ -29,7 +29,7 @@ from .cyth import (
     get_asymm_2_max,
 
     # Spearman's correlation.
-    get_srho_for_ecop_nd,
+    get_srho_minus_for_ecop_nd,
     get_srho_plus_for_hist_nd,
 
     # Entropy.

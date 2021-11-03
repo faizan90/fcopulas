@@ -35,8 +35,10 @@ from .asymm import (
 asymms_exp = get_asymms_exp()
 
 from .scorr import (
-    get_srho_for_ecop_nd,
+    get_srho_minus_for_ecop_nd,
     get_srho_plus_for_hist_nd,
+    get_srho_plus_for_probs_nd,
+    get_srho_minus_for_probs_nd,
     )
 
 from .etpy import (
