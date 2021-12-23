@@ -23,3 +23,13 @@ cpdef DT_D get_asymm_2_sample(DT_D[:] u, DT_D[:] v) except +
 cpdef DT_D get_asymm_1_max(DT_D scorr) except +
 
 cpdef DT_D get_asymm_2_max(DT_D scorr) except +
+
+cpdef DT_D get_asymm_1_var(DT_D[:] u, DT_D[:] v, DT_D asymm_1_mean) except +
+
+cpdef DT_D get_asymm_1_skew(
+        DT_D[:] u, DT_D[:] v, DT_D asymm_1_mean, DT_D asymm_1_var) except +
+
+cpdef DT_D get_asymm_2_var(DT_D[:] u, DT_D[:] v, DT_D asymm_2_mean) except +
+
+cpdef DT_D get_asymm_2_skew(
+        DT_D[:] u, DT_D[:] v, DT_D asymm_1_mean, DT_D asymm_2_var) except +

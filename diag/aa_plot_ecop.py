@@ -51,26 +51,34 @@ def main():
 #         r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\test_lump_ms_asymm2_01\sim_data_0.csv",
 #         sep=';').loc[:, ['427', '3421']]
 
+    # ser = pd.read_csv(
+    #     r"P:\Synchronize\Hobby_Projects\aaa_load_cell__drift\mass_drift_temp_ts.csv",
+    #     sep=';').iloc[:, [0, 1]]
+
     ser = pd.read_csv(
-        r"P:\Synchronize\Hobby_Projects\aaa_load_cell__drift\mass_drift_temp_ts.csv",
-        sep=';').iloc[:, [0, 1]]
+        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftma\fftma_sa_v2_v1_04_hourly\sims.csv",
+        sep=';', index_col=0).iloc[:, 0]
+
+    # ser = pd.read_csv(
+    #     r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\cmpr_with_fftm1_05_hourly\data_extracted\sim_data_0.csv",
+    #     sep=';').iloc[:, 0]
 
     #==========================================================================
     # Auto coula case
     #==========================================================================
-#     lag = 2
-#     vals_1 = ser.values.copy()
-#     vals_2 = ser.values.copy()
-#
-#     vals_1 = vals_1[:-lag]
-#     vals_2 = vals_2[+lag:]
+    lag = 1
+    vals_1 = ser.values.copy()
+    vals_2 = ser.values.copy()
+
+    vals_1 = vals_1[:-lag]
+    vals_2 = vals_2[+lag:]
     #==========================================================================
 
     #==========================================================================
     # Cross copula case
     #==========================================================================
-    vals_1 = ser.values[:, 0]
-    vals_2 = ser.values[:, 1]
+    # vals_1 = ser.values[:, 0]
+    # vals_2 = ser.values[:, 1]
     #==========================================================================
 
     probs_1 = rankdata(vals_1) / (vals_1.size + 1)
@@ -85,12 +93,12 @@ def main():
     plt.grid()
     plt.gca().set_axisbelow(True)
 
-#     plt.savefig(
-#         r"P:\Synchronize\IWS\Projects\2016_DFG_SPATE\Meetings_Second_Phase\20210311_Online\ecop_ms_ad_lump.png",
-#         dpi=600,
-#         bbox_inches='tight')
+    plt.savefig(
+        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftma\fftma_sa_v2_v1_04_hourly\ref_ecop_l1.png",
+        dpi=600,
+        bbox_inches='tight')
 
-    plt.show()
+    # plt.show()
 
     plt.close()
     return

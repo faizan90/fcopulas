@@ -20,7 +20,8 @@ from .ecop import (
     get_etpy_min,
     get_etpy_max,
     get_ecop_nd,
-    get_hist_nd,
+    get_ecop_nd_empirical,
+    get_ecop_nd_empirical_sorted,
     )
 
 from .asymm import (
@@ -30,6 +31,10 @@ from .asymm import (
     get_asymms_exp,
     get_asymm_1_max,
     get_asymm_2_max,
+    get_asymm_1_var,
+    get_asymm_1_skew,
+    get_asymm_2_var,
+    get_asymm_2_skew,
     )
 
 asymms_exp = get_asymms_exp()
@@ -42,7 +47,12 @@ from .scorr import (
     )
 
 from .etpy import (
-    get_etpy_nd,
+    get_etpy_nd_from_hist,
     get_etpy_min_nd,
-    get_etpy_max_nd
+    get_etpy_max_nd,
+    get_etpy_nd_from_probs,
+    )
+
+from .misc import (
+    get_hist_nd,
     )

@@ -13,16 +13,16 @@ import numpy as np
 cimport numpy as np
 
 
-cpdef get_srho_minus_for_ecop_nd(
+cpdef DT_D get_srho_minus_for_ecop_nd(
         const DT_D[::1] ecop, 
         unsigned long long n_dims) except +
 
-cpdef get_srho_plus_for_hist_nd(
+cpdef DT_D get_srho_plus_for_hist_nd(
         const unsigned long long[::1] hist, 
         unsigned long long n_dims,
         unsigned long long n_bins,
         unsigned long long n_vals) except +
 
-cpdef get_srho_plus_for_probs_nd(const DT_D[:, ::1] probs) except +
+cpdef DT_D get_srho_plus_for_probs_nd(const DT_D[:, ::1] probs) except +
 
-cpdef get_srho_minus_for_probs_nd(const DT_D[:, ::1] probs) except +
+cpdef DT_D get_srho_minus_for_probs_nd(const DT_D[:, ::1] probs) except +

@@ -16,7 +16,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
-import matplotlib.pyplot as plt; plt.ioff()
 
 from fcopulas.cyth import get_srho_plus_for_probs_nd
 
@@ -33,11 +32,11 @@ def main():
     main_dir = Path(r'P:\Synchronize\IWS\Testings\Copulas_practice\ecop_nd')
     os.chdir(main_dir)
 
-    in_data_file = Path(
-        r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
-
     # in_data_file = Path(
-    #     r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
+    #     r'neckar_full_neckar_avg_temp_kriging_1961-01-01_to_2015-12-31_1km_all__EDK.csv')
+
+    in_data_file = Path(
+        r'neckar_norm_cop_infill_discharge_1961_2015_20190118.csv')
 
     denom_add = 1.0  # only applies to the python verision.
     #==========================================================================
@@ -67,15 +66,13 @@ def main():
 
     probs = probs.copy('c')
 
+    # probs = 1 - probs
+
     n_dims = probs.shape[1]
 
     n_vals = probs.shape[0]
 
-    n_bins = 10
-
-    n_cells = n_bins ** n_dims
-
-    if True:
+    if False:
         print('Using np.arange as probs!')
         probs = np.tile(
             np.arange(1, n_vals + 1).reshape(-1, 1),
@@ -83,48 +80,16 @@ def main():
 
     # probs[:, 0] = 1 - probs[:, 0]
     # probs[:, 1] = 1 - probs[:, 1]
-    # probs[:, 2] = 1 - probs[:, 2]
+    probs[:, 2] = 1 - probs[:, 2]
     #==========================================================================
 
     print('scorr mat:')
     print(np.corrcoef(probs.T))
 
     if False:
-        print(n_vals, n_dims, n_bins)
+        print(n_vals, n_dims)
         print(probs)
     #==========================================================================
-
-    if False:
-        # Compute relative frequencies for the empirical copula.
-        beg_time = timeit.default_timer()
-
-        ecop = np.zeros(n_cells)
-
-        for i in range(n_vals):
-            idxs = np.zeros(n_dims, dtype=np.uint64)
-            for j in range(n_dims):
-                idxs[j] = int(probs[i, j] * n_bins)
-
-                if j:
-                    idxs[j] *= n_bins ** j
-
-            if False:
-                print(idxs, idxs.sum())
-
-            ecop[idxs.sum(dtype=np.uint64)] += 1
-
-        end_time = timeit.default_timer()
-
-        print(f'Histogram (raw) took: {end_time - beg_time:0.5f} seconds.')
-
-        ecop /= n_vals
-
-        ecop_reshape = ecop.reshape(*[n_bins] * n_dims)
-
-        if False:
-            print('ecop (raw):')
-            print(ecop_reshape)
-            print(ecop.sum())
 
     if True:
         # Compute relative frequencies for the empirical copula at cells where

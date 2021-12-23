@@ -11,14 +11,14 @@ cimport numpy as np
 
 from numpy.math cimport INFINITY
 
-from .misc cimport chk_uexp_ovf
+from .misc cimport chk_uexp_ovf, fill_hist_nd
 
 cdef extern from "math.h" nogil:
     cdef:
-        DT_D log(DT_D x)
+        double log(double x)
 
 
-cpdef DT_D get_etpy_nd(
+cpdef double get_etpy_nd_from_hist(
         unsigned long long[::1] hist_nd,
         unsigned long long n_vals) except +:
 
@@ -29,7 +29,7 @@ cpdef DT_D get_etpy_nd(
     cdef:
         Py_ssize_t i, n_cells
 
-        DT_D etpy, density
+        double etpy, density
 
     n_cells = hist_nd.shape[0]
 
@@ -38,14 +38,14 @@ cpdef DT_D get_etpy_nd(
         if not hist_nd[i]:
             continue
 
-        density = hist_nd[i] / <DT_D> n_vals
+        density = hist_nd[i] / <double> n_vals
 
         etpy += -density * log(density)
 
     return etpy
 
 
-cpdef DT_D get_etpy_min_nd(
+cpdef double get_etpy_min_nd(
         unsigned long long n_bins, unsigned long long n_dims) except +:
 
     '''
@@ -53,11 +53,11 @@ cpdef DT_D get_etpy_min_nd(
     '''
 
     cdef:
-        DT_D dens, etpy
+        double dens, etpy
 
     assert n_dims >= 2
 
-    #dens = 1.0 / <DT_D> n_bins
+    #dens = 1.0 / <double> n_bins
 
     #etpy = -log(dens)
 
@@ -66,7 +66,7 @@ cpdef DT_D get_etpy_min_nd(
     return etpy
 
 
-cpdef DT_D get_etpy_max_nd(
+cpdef double get_etpy_max_nd(
         unsigned long long n_bins, unsigned long long n_dims) except +:
 
     '''
@@ -74,12 +74,40 @@ cpdef DT_D get_etpy_max_nd(
     '''
 
     cdef:
-        DT_D dens, etpy
+        double dens, etpy
 
     assert n_dims >= 2
 
-    dens = 1.0 / <DT_D> (n_bins ** n_dims)
+    dens = 1.0 / <double> (n_bins ** n_dims)
 
     etpy = -log(dens)
+
+    return etpy
+
+
+cpdef double get_etpy_nd_from_probs(
+        const double[:, ::1] probs, unsigned long long n_bins) except +:
+
+    cdef:
+        unsigned long long n_vals, n_dims
+
+        double etpy
+
+        unsigned long long[::1] hist_nd
+
+    n_vals = probs.shape[0]
+    n_dims = probs.shape[1]
+
+    assert n_vals > 1, 'n_vals too low!'
+    assert n_dims > 1, 'n_dims too low!'
+    assert n_bins > 1, 'n_bins too low!'
+    assert chk_uexp_ovf(n_bins, n_dims) == 0, (
+        'Number of cells for the ecop too large!')
+
+    hist_nd = np.zeros(n_bins ** n_dims, dtype=np.uint64)
+
+    fill_hist_nd(probs, hist_nd, n_bins)
+
+    etpy = get_etpy_nd_from_hist(hist_nd, n_vals)
 
     return etpy

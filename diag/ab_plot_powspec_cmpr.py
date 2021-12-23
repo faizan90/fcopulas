@@ -99,12 +99,12 @@ def get_cumm_mag_spec(ref_data, sim_data):
     sim_mag = get_mag_spec(sim_ft)
 
     numr = (
-        ref_mag[1:,:] *
-        sim_mag[1:,:])
+        ref_mag *
+        sim_mag)
 
     demr = (
-        ((ref_mag[1:,:] ** 2).sum(axis=0) ** 0.5) *
-        ((sim_mag[1:,:] ** 2).sum(axis=0) ** 0.5))
+        ((ref_mag ** 2).sum(axis=0) ** 0.5) *
+        ((sim_mag ** 2).sum(axis=0) ** 0.5))
 
     return np.cumsum(numr, axis=0) / demr
 

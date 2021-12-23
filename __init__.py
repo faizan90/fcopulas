@@ -27,13 +27,20 @@ from .cyth import (
     asymms_exp,
     get_asymm_1_max,
     get_asymm_2_max,
+    get_asymm_1_var,
+    get_asymm_1_skew,
+    get_asymm_2_var,
+    get_asymm_2_skew,
 
     # Spearman's correlation.
     get_srho_minus_for_ecop_nd,
     get_srho_plus_for_hist_nd,
+    get_srho_plus_for_probs_nd,
+    get_srho_minus_for_probs_nd,
 
     # Entropy.
-    get_etpy_nd,
+    get_etpy_nd_from_hist,
     get_etpy_min_nd,
     get_etpy_max_nd,
+    get_etpy_nd_from_probs,
     )
