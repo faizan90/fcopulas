@@ -46,12 +46,6 @@ cpdef tuple sample_from_2d_ecop(
         const DT_UL nvs,
         const DT_UL init_idx) except +
 
-cpdef void fill_bi_var_cop_dens(
-        DT_D[:] x_probs, DT_D[:] y_probs, DT_D[:, ::1] emp_dens_arr) except +
-
-cpdef void fill_cumm_dist_from_bivar_emp_dens(
-        DT_D[:, ::1] emp_dens_arr, DT_D[:, ::1] cum_emp_dens_arr) except +
-
 cpdef DT_D get_etpy_min(DT_UL n_bins) except +
 
 cpdef DT_D get_etpy_max(DT_UL n_bins) except +

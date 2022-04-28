@@ -56,17 +56,19 @@ def main():
     #     sep=';').iloc[:, [0, 1]]
 
     ser = pd.read_csv(
-        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftma\fftma_sa_v2_v1_04_hourly\sims.csv",
-        sep=';', index_col=0).iloc[:, 0]
+        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftmasa_disagg\P_cp_simul_0_9\ref_all_9hd.csv",
+        sep=';', index_col=0).iloc[:, 3]
 
     # ser = pd.read_csv(
     #     r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\cmpr_with_fftm1_05_hourly\data_extracted\sim_data_0.csv",
     #     sep=';').iloc[:, 0]
 
+    out_fig_path = Path(r'P:\Synchronize\IWS\Testings\fourtrans_practice\fftmasa_disagg\P_cp_simul_0_9\ecops\ref_P02575_lag_20.png')
+
     #==========================================================================
     # Auto coula case
     #==========================================================================
-    lag = 1
+    lag = 20
     vals_1 = ser.values.copy()
     vals_2 = ser.values.copy()
 
@@ -81,10 +83,10 @@ def main():
     # vals_2 = ser.values[:, 1]
     #==========================================================================
 
-    probs_1 = rankdata(vals_1) / (vals_1.size + 1)
-    probs_2 = rankdata(vals_2) / (vals_2.size + 1)
+    probs_1 = rankdata(vals_1) / (vals_1.size + 1.0)
+    probs_2 = rankdata(vals_2) / (vals_2.size + 1.0)
 
-    plt.figure(figsize=(4, 4))
+    plt.figure(figsize=(6, 6))
 
     plt.scatter(probs_1, probs_2, alpha=0.4, c='k')
 
@@ -93,10 +95,7 @@ def main():
     plt.grid()
     plt.gca().set_axisbelow(True)
 
-    plt.savefig(
-        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftma\fftma_sa_v2_v1_04_hourly\ref_ecop_l1.png",
-        dpi=600,
-        bbox_inches='tight')
+    plt.savefig(out_fig_path, dpi=600, bbox_inches='tight')
 
     # plt.show()
 
