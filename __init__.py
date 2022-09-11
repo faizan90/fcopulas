@@ -43,4 +43,9 @@ from .cyth import (
     get_etpy_min_nd,
     get_etpy_max_nd,
     get_etpy_nd_from_probs,
+
+    # Asymmetrize.
+    asymmetrize_type_1_cy,
+    asymmetrize_type_2_cy,
+    asymmetrize_type_3_cy,
     )

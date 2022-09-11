@@ -1,0 +1,223 @@
+'''
+@author: Faizan-Uni-Stuttgart
+
+Aug 18, 2022
+
+12:58:22 PM
+
+'''
+import os
+import sys
+import time
+import timeit
+import traceback as tb
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy.stats import rankdata, expon
+import matplotlib.pyplot as plt; plt.ioff()
+
+from kde import KERNEL_FTNS_DICT
+from fcopulas import asymmetrize_type_3_cy
+
+DEBUG_FLAG = False
+
+
+def main():
+
+    main_dir = Path(os.getcwd())
+    os.chdir(main_dir)
+
+    ts_file = Path(r'P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa\hbv_sim__1963_2015_2.csv')
+
+    half_window_size = 100
+
+    n_levels = 10
+    max_shift_exp = 3
+    max_shift = 5
+    pre_vals_ratio = 1.1
+    asymm_n_iters = 1
+    prob_center = 0.5
+    #==========================================================================
+
+    if False:
+    # if True:
+        rel_dists = np.concatenate((
+            np.arange(half_window_size, -1, -1.0,),
+            np.arange(1.0, half_window_size + 1.0)))
+
+        rel_dists /= rel_dists.max() + 1.0
+
+        # kern_ftn = KERNEL_FTNS_DICT['epan']
+        # kern_ftn = KERNEL_FTNS_DICT['sigm']
+        # kern_ftn = KERNEL_FTNS_DICT['logi']
+        # kern_ftn = KERNEL_FTNS_DICT['tric']
+        kern_ftn = KERNEL_FTNS_DICT['triw']
+        # kern_ftn = KERNEL_FTNS_DICT['biwe']
+
+        ref_ser = kern_ftn(rel_dists)
+        ref_ser /= ref_ser.max()
+
+        # ref_ser = 1 - ref_ser
+
+        ref_ser = np.concatenate((ref_ser, -ref_ser))
+
+    else:
+        ts_ser = pd.read_csv(ts_file, sep=';', index_col=0).loc['2000-01-01':'2001-12-31', 'temp']
+
+        ref_ser = ts_ser.values
+
+    probs = rankdata(ref_ser, axis=0) / (ref_ser.shape[0] + 1.0)
+
+    # ref_ser = expon.ppf(probs)
+
+    # inc = ref_ser.min() * 3e-5
+    inc = 3e-3
+    asymms_rand_err = -inc + (2 * inc) * np.random.random(ref_ser.shape[0])
+    asymms_rand_err *= 0
+
+    ref_ser = np.round(ref_ser, 6).reshape(-1, 1).copy(order='f')
+    probs = probs.reshape(-1, 1).copy(order='f')
+    asymms_rand_err = asymms_rand_err.copy(order='f')
+
+    ref_ser_srt = np.sort(ref_ser, axis=0)
+
+    asym_ser = asymmetrize_type_3_cy(
+        # ref_ser,
+        probs,
+        probs,
+        n_levels,
+        max_shift_exp,
+        max_shift,
+        pre_vals_ratio,
+        asymm_n_iters,
+        asymms_rand_err,
+        prob_center,
+        )
+
+    asym_ser_rev = asymmetrize_type_3_cy(
+        # ref_ser,
+        asym_ser,
+        probs,
+        n_levels,
+        max_shift_exp,
+        -max_shift,
+        pre_vals_ratio,
+        asymm_n_iters,
+        asymms_rand_err,
+        prob_center,
+        )
+
+    plt.figure()
+
+    for i in range(1):
+
+        # beg_idx = np.argmin(asym_ser[:, i])
+        # asym_ser = np.roll(asym_ser, -beg_idx, axis=0)
+        #
+        # assert np.argmin(asym_ser[:, i]) == 0
+
+        asym_ser[:, i] = ref_ser_srt[np.argsort(np.argsort(asym_ser[:, i])), i]
+        # asym_ser_rev[:, i] = ref_ser_srt[np.argsort(np.argsort(asym_ser_rev[:, i])), i]
+
+        plt.plot(ref_ser[:, i], alpha=0.7, lw=2, c='r', label='ref')
+        plt.plot(asym_ser[:, i], alpha=0.7, lw=1.5, c='b', label='asym')
+        # plt.plot(asym_ser_rev[:, i], alpha=0.7, lw=1.5, c='g', label='asym_rev')
+
+        # plt.plot(asymr_ser[:, i], alpha=0.7, lw=1.5, c='g', ls='-.', label='asymr')
+        # plt.plot(probs[:, i], alpha=0.7, lw=1.5, c='k', ls='dotted', label='probs')
+
+    plt.grid()
+    plt.gca().set_axisbelow(True)
+
+    plt.legend()
+
+    plt.xlabel('Time step')
+    plt.ylabel('Magnitude')
+
+    plt.title(
+        f'n_levels: {n_levels}, '
+        f'max_shift_exp: {max_shift_exp:0.2f}, '
+        f'max_shift: {max_shift}\n'
+        f'pre_vals_ratio: {pre_vals_ratio:0.2f}, '
+        f'asymm_n_iters: {asymm_n_iters}, '
+        f'prob_center: {prob_center:0.2f}')
+
+    plt.show(block=False)
+
+    asym_ser_probs = rankdata(asym_ser[:, 0]) / (asym_ser.shape[0] + 1.0)
+    # asym_ser_probs_rev = rankdata(asym_ser_rev[:, 0]) / (asym_ser_rev.shape[0] + 1.0)
+
+    axes = plt.subplots(2, 2)[1].ravel()
+
+    ofst = 1
+    axes[0].scatter(asym_ser_probs[:-ofst], asym_ser_probs[ofst:], alpha=0.5, label='lag1')
+    axes[0].grid()
+    axes[0].set_axisbelow(True)
+    axes[0].legend()
+    axes[0].set_aspect('equal')
+    axes[0].plot([0, 1], [0, 1], c='k', alpha=0.4)
+
+    ofst += 1
+    axes[1].scatter(asym_ser_probs[:-ofst], asym_ser_probs[ofst:], alpha=0.5, label='lag2')
+    axes[1].grid()
+    axes[1].set_axisbelow(True)
+    axes[1].legend()
+    axes[1].set_aspect('equal')
+    axes[1].plot([0, 1], [0, 1], c='k', alpha=0.4)
+
+    ofst += 1
+    axes[2].scatter(asym_ser_probs[:-ofst], asym_ser_probs[ofst:], alpha=0.5, label='lag3')
+    axes[2].grid()
+    axes[2].set_axisbelow(True)
+    axes[2].legend()
+    axes[2].set_aspect('equal')
+    axes[2].plot([0, 1], [0, 1], c='k', alpha=0.4)
+
+    ofst += 1
+    axes[3].scatter(asym_ser_probs[:-ofst], asym_ser_probs[ofst:], alpha=0.5, label='lag4')
+    axes[3].grid()
+    axes[3].set_axisbelow(True)
+    axes[3].legend()
+    axes[3].set_aspect('equal')
+    axes[3].plot([0, 1], [0, 1], c='k', alpha=0.4)
+
+    plt.show()
+    return
+
+
+if __name__ == '__main__':
+    print('#### Started on %s ####\n' % time.asctime())
+    START = timeit.default_timer()
+
+    #==========================================================================
+    # When in post_mortem:
+    # 1. "where" to show the stack,
+    # 2. "up" move the stack up to an older frame,
+    # 3. "down" move the stack down to a newer frame, and
+    # 4. "interact" start an interactive interpreter.
+    #==========================================================================
+
+    if DEBUG_FLAG:
+        try:
+            main()
+
+        except:
+            pre_stack = tb.format_stack()[:-1]
+
+            err_tb = list(tb.TracebackException(*sys.exc_info()).format())
+
+            lines = [err_tb[0]] + pre_stack + err_tb[2:]
+
+            for line in lines:
+                print(line, file=sys.stderr, end='')
+
+            import pdb
+            pdb.post_mortem()
+    else:
+        main()
+
+    STOP = timeit.default_timer()
+    print(('\n#### Done with everything on %s.\nTotal run time was'
+           ' about %0.4f seconds ####' % (time.asctime(), STOP - START)))
