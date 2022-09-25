@@ -56,8 +56,8 @@ def main():
     #     sep=';').iloc[:, [0, 1]]
 
     ser = pd.read_csv(
-        r"P:\Synchronize\IWS\Testings\fourtrans_practice\fftmasa_disagg\P_cp_simul_0_9\ref_all_9hd.csv",
-        sep=';', index_col=0).iloc[:, 3]
+        r"P:\Synchronize\IWS\Testings\fourtrans_practice\iaaft\test_asymmetrize_ms_05\sim_files\auto_sims_420.csv",
+        sep=';', index_col=0).iloc[:, 0]
 
     # ser = pd.read_csv(
     #     r"P:\Synchronize\IWS\Testings\fourtrans_practice\phsann\cmpr_with_fftm1_05_hourly\data_extracted\sim_data_0.csv",
@@ -68,7 +68,7 @@ def main():
     #==========================================================================
     # Auto coula case
     #==========================================================================
-    lag = 20
+    lag = 1
     vals_1 = ser.values.copy()
     vals_2 = ser.values.copy()
 
@@ -88,16 +88,16 @@ def main():
 
     plt.figure(figsize=(6, 6))
 
-    plt.scatter(probs_1, probs_2, alpha=0.4, c='k')
+    plt.scatter(probs_1, probs_2, alpha=0.1, c='k')
 
     plt.gca().set_aspect('equal')
 
     plt.grid()
     plt.gca().set_axisbelow(True)
 
-    plt.savefig(out_fig_path, dpi=600, bbox_inches='tight')
+    # plt.savefig(out_fig_path, dpi=600, bbox_inches='tight')
 
-    # plt.show()
+    plt.show()
 
     plt.close()
     return
