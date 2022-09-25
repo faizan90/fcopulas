@@ -34,7 +34,7 @@ cdef extern from "asymmetrize_test.h" nogil:
             const unsigned long long arr_size)
 
 
-cpdef np.ndarray asymmetrize_type_10_ms_cy(
+cpdef np.ndarray asymmetrize_type_11_ms_cy(
         const double[::1, :] data, 
         const double[::1, :] probs, 
         const uint32_t[::1] n_levelss,
@@ -176,9 +176,9 @@ cpdef np.ndarray asymmetrize_type_10_ms_cy(
                         shift_idx += 1
 
                 for step_idx in range(n_steps):
-                    if (data_col_levels[step_idx] > level) and (
-                       (<double> (data_col_levels[step_idx] - level)) < 
-                        level_thresh):
+                    if (data_col_levels[step_idx] > level) or (
+                       abs(<double> (data_col_levels[step_idx] - level)) > 
+                       level_thresh):
 
                         continue
 
@@ -221,14 +221,16 @@ cpdef np.ndarray asymmetrize_type_10_ms_cy(
                 break
 
             for step_idx in range(n_steps):
-                data_col_asymm[step_idx] += (
-                    data_col_asymm[step_idx] * 
-                    rand_err_rel[step_idx, col_idx] * 
-                    rand_err_sclr_rel)
+ 
+                if asymm_iter < (asymm_n_iters - 1):
+                    data_col_asymm[step_idx] += (
+                        data_col_asymm[step_idx] * 
+                        rand_err_rel[step_idx, col_idx] * 
+                        rand_err_sclr_rel)
 
-                data_col_asymm[step_idx] += (
-                    rand_err_cnst[step_idx, col_idx] * 
-                    rand_err_sclr_cnst)
+                    data_col_asymm[step_idx] += (
+                        rand_err_cnst[step_idx, col_idx] * 
+                        rand_err_sclr_cnst)
 
                 data_col_asymm_tmp[step_idx] = data_col_asymm[step_idx]
 
@@ -236,7 +238,9 @@ cpdef np.ndarray asymmetrize_type_10_ms_cy(
 
             for step_idx in range(n_steps):
                 step_idx_new = searchsorted(
-                    &data_col_asymm_tmp[0], data_col_asymm[step_idx], n_steps)
+                    &data_col_asymm_tmp[0], 
+                    data_col_asymm[step_idx], 
+                    n_steps)
 
                 data_col_asymm[step_idx] = data_col_srt[step_idx_new]
 

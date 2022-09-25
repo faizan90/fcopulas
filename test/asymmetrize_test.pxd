@@ -12,7 +12,7 @@ import numpy as np
 cimport numpy as np
 
 
-cpdef np.ndarray asymmetrize_type_10_ms_cy(
+cpdef np.ndarray asymmetrize_type_11_ms_cy(
         const double[::1, :] data, 
         const double[::1, :] probs, 
         const uint32_t[::1] n_levelss,

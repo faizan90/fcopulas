@@ -24,7 +24,7 @@ import pyximport
 
 pyximport.install()
 
-from asymmetrize_test import asymmetrize_type_10_ms_cy
+from asymmetrize_test import asymmetrize_type_11_ms_cy
 
 DEBUG_FLAG = False
 
@@ -38,18 +38,18 @@ def main():
 
     half_window_size = 50
 
-    n_levels = 100
+    n_levels = 400
     max_shift_exp = 1.0
-    max_shift = 3
-    pre_vals_ratio = 0.8
-    asymm_n_iters = 1
+    max_shift = 10
+    pre_vals_ratio = 0.7
+    asymm_n_iters = 2
     prob_center = 0.0
-    pre_val_exp = 1.0
-    crt_val_exp = 1.0
-    level_thresh_cnst = -50
-    level_thresh_slp = -0.01
-    rand_err_sclr_cnst = 0.01
-    rand_err_sclr_rel = 0.05
+    pre_val_exp = 0.9
+    crt_val_exp = 1.1
+    level_thresh_cnst = 300
+    level_thresh_slp = -0.0
+    rand_err_sclr_cnst = 0.00001
+    rand_err_sclr_rel = 0.0001
     #==========================================================================
 
     if False:
@@ -98,8 +98,9 @@ def main():
     asymms_rand_err = np.random.random(ref_ser.shape[0])
     # asymms_rand_err *= 0
 
-    rand_err_cnst = -inc + (2 * inc) * np.random.random(ref_ser.shape[0])
+    # rand_err_cnst = -inc + (2 * inc) * np.random.random(ref_ser.shape[0])
     rand_err_rel = -0.5 + np.random.random(ref_ser.shape[0])
+    rand_err_cnst = -inc + (2 * inc) * rand_err_rel
 
     ref_ser = np.round(ref_ser, 6).reshape(-1, 1).copy(order='f')
     probs = probs.reshape(-1, 1).copy(order='f')
@@ -151,7 +152,7 @@ def main():
     #     prob_center,
     #     )
 
-    asym_ser = asymmetrize_type_10_ms_cy(
+    asym_ser = asymmetrize_type_11_ms_cy(
         ref_ser,
         # probs,
         probs,
