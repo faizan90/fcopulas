@@ -34,22 +34,23 @@ def main():
     main_dir = Path(os.getcwd())
     os.chdir(main_dir)
 
-    ts_file = Path(r"P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa\test_maiden_416\data_extracted\sim_data_00.csv")
+    ts_file = Path(r"P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa\test_maiden_400\data_extracted\sim_data_00.csv")
 
-    half_window_size = 50
+    half_window_size = 200
 
-    n_levels = 400
+    n_levels = 100
     max_shift_exp = 1.0
-    max_shift = 10
-    pre_vals_ratio = 0.7
-    asymm_n_iters = 2
+    max_shift = 20
+    pre_vals_ratio = 0.95
+    asymm_n_iters = 1
     prob_center = 0.0
-    pre_val_exp = 0.9
-    crt_val_exp = 1.1
-    level_thresh_cnst = 300
+    pre_val_exp = 1.0
+    crt_val_exp = 1.0
+    level_thresh_cnst = 100
     level_thresh_slp = -0.0
-    rand_err_sclr_cnst = 0.00001
-    rand_err_sclr_rel = 0.0001
+    rand_err_sclr_cnst = 0.0
+    rand_err_sclr_rel = 0.00
+    probs_exp = 0.0
     #==========================================================================
 
     if False:
@@ -77,6 +78,7 @@ def main():
     else:
         # ts_ser = pd.read_csv(ts_file, sep=';', index_col=0).loc['2000-01-01':'2001-12-31', 'q_obs']
         ts_ser = pd.read_csv(ts_file, sep=';', index_col=None).loc[:, '420']
+        # ts_ser = pd.read_csv(ts_file, sep=';', index_col=None).loc[:, 'prec']
 
         ref_ser = ts_ser.values
 
@@ -86,6 +88,8 @@ def main():
         # ref_ser[0] = -1
 
     probs = rankdata(ref_ser, axis=0) / (ref_ser.shape[0] + 1.0)
+
+    # probs[probs < 0.6] = 0.6
 
     # probs = (ref_ser - ref_ser.min()) / (ref_ser.max() - ref_ser.min())
 
@@ -124,6 +128,7 @@ def main():
     level_thresh_slps = np.array([level_thresh_slp], dtype=float)
     rand_err_sclrs_cnsts = np.array([rand_err_sclr_cnst], dtype=float)
     rand_err_sclrs_rels = np.array([rand_err_sclr_rel], dtype=float)
+    probs_exps = np.array([probs_exp], dtype=float)
     #==========================================================================
 
     # asym_ser = asymmetrize_type_3_cy(
@@ -153,8 +158,8 @@ def main():
     #     )
 
     asym_ser = asymmetrize_type_11_ms_cy(
-        ref_ser,
-        # probs,
+        # ref_ser,
+        probs,
         probs,
         n_levelss,
         max_shift_exps,
@@ -170,7 +175,8 @@ def main():
         rand_err_sclrs_cnsts,
         rand_err_sclrs_rels,
         rand_err_cnst,
-        rand_err_rel)
+        rand_err_rel,
+        probs_exps)
 
     assert np.all(np.isfinite(asym_ser))
 

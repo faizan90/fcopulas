@@ -1,5 +1,5 @@
 # cython: nonecheck=False
-# cython: boundscheck=False
+# cython: boundscheck=True
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: language_level=3
@@ -29,4 +29,5 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
         const double[::1] rand_err_sclr_cnsts,
         const double[::1] rand_err_sclr_rels,
         const double[::1, :] rand_err_cnst,
-        const double[::1, :] rand_err_rel) except +
+        const double[::1, :] rand_err_rel,
+        const double[::1] probs_exps) except +

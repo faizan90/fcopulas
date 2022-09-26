@@ -56,4 +56,5 @@ from .cyth import (
     asymmetrize_type_8_ms_cy,
     asymmetrize_type_9_ms_cy,
     asymmetrize_type_10_ms_cy,
+    asymmetrize_type_11_ms_cy,
     )

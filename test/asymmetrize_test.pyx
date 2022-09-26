@@ -1,5 +1,5 @@
 # cython: nonecheck=False
-# cython: boundscheck=False
+# cython: boundscheck=True
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: language_level=3
@@ -51,7 +51,8 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
         const double[::1] rand_err_sclr_cnsts,
         const double[::1] rand_err_sclr_rels,
         const double[::1, :] rand_err_cnst,
-        const double[::1, :] rand_err_rel) except +:
+        const double[::1, :] rand_err_rel,
+        const double[::1] probs_exps) except +:
 
     cdef:
         Py_ssize_t col_idx, n_cols, step_idx, n_steps, step_idx_new
@@ -67,7 +68,7 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
         double max_shift_exp, pre_vals_ratio, prob_center
         double max_shift_level_f, pre_step_value, crt_step_value
         double pre_val_exp, crt_val_exp, level_thresh_slp, level_thresh
-        double rand_err_sclr_cnst, rand_err_sclr_rel
+        double rand_err_sclr_cnst, rand_err_sclr_rel, probs_exp
 
         double complex pre_val, crt_val
 
@@ -102,12 +103,14 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
         level_thresh_slp = level_thresh_slps[col_idx]
         rand_err_sclr_cnst = rand_err_sclr_cnsts[col_idx]
         rand_err_sclr_rel = rand_err_sclr_rels[col_idx]
+        probs_exp = probs_exps[col_idx]
 
         for step_idx in range(n_steps):
             data_col_asymm[step_idx] = data[step_idx, col_idx]
 
             data_col_levels[step_idx] = <int64_t> ceil(
-                (abs(probs[step_idx, col_idx] - prob_center)) * n_levels)
+                (abs(probs[step_idx, col_idx] - prob_center) ** probs_exp) *
+                n_levels)
 
             data_col_srt[step_idx] = data[step_idx, col_idx]
 
@@ -167,12 +170,12 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
                         pre_step_value = data_col_asymm_level[n_steps - 1]
                         for step_idx in range(n_steps):
                             crt_step_value = data_col_asymm_level[step_idx]
- 
+
                             if data_col_levels[step_idx] <= level:
                                 data_col_asymm_level[step_idx] = pre_step_value
 
                             pre_step_value = crt_step_value
- 
+
                         shift_idx += 1
 
                 for step_idx in range(n_steps):
@@ -220,29 +223,30 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
             if terminate_flag:
                 break
 
-            for step_idx in range(n_steps):
- 
-                if asymm_iter < (asymm_n_iters - 1):
-                    data_col_asymm[step_idx] += (
-                        data_col_asymm[step_idx] * 
-                        rand_err_rel[step_idx, col_idx] * 
-                        rand_err_sclr_rel)
+            if 1:
+                for step_idx in range(n_steps):
+                    data_col_asymm_tmp[step_idx] = data_col_asymm[step_idx]
 
-                    data_col_asymm[step_idx] += (
-                        rand_err_cnst[step_idx, col_idx] * 
-                        rand_err_sclr_cnst)
+                quick_sort(&data_col_asymm_tmp[0], 0, n_steps - 1)
 
-                data_col_asymm_tmp[step_idx] = data_col_asymm[step_idx]
+                for step_idx in range(n_steps):
+                    step_idx_new = searchsorted(
+                        &data_col_asymm_tmp[0], 
+                        data_col_asymm[step_idx], 
+                        n_steps)
 
-            quick_sort(&data_col_asymm_tmp[0], 0, n_steps - 1)
+                    data_col_asymm[step_idx] = data_col_srt[step_idx_new]
 
-            for step_idx in range(n_steps):
-                step_idx_new = searchsorted(
-                    &data_col_asymm_tmp[0], 
-                    data_col_asymm[step_idx], 
-                    n_steps)
+                if asymm_iter == (asymm_n_iters - 1):
+                    for step_idx in range(n_steps):
+                        data_col_asymm[step_idx] += (
+                            data_col_asymm[step_idx] * 
+                            rand_err_rel[step_idx, col_idx] * 
+                            rand_err_sclr_rel)
 
-                data_col_asymm[step_idx] = data_col_srt[step_idx_new]
+                        data_col_asymm[step_idx] += (
+                            rand_err_cnst[step_idx, col_idx] * 
+                            rand_err_sclr_cnst)
 
             asymm_iter += 1
 
