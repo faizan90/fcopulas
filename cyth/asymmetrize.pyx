@@ -2349,29 +2349,29 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
             if terminate_flag:
                 break
 
-            # # if asymm_iter == (asymm_n_iters - 1):
-            # for step_idx in range(n_steps):
-            #     data_col_asymm[step_idx] += (
-            #         data_col_asymm[step_idx] * 
-            #         rand_err_rel[step_idx, col_idx] * 
-            #         rand_err_sclr_rel)
-            #
-            #     data_col_asymm[step_idx] += (
-            #         rand_err_cnst[step_idx, col_idx] * 
-            #         rand_err_sclr_cnst)
-            #
-            # for step_idx in range(n_steps):
-            #     data_col_asymm_tmp[step_idx] = data_col_asymm[step_idx]
-            #
-            # quick_sort(&data_col_asymm_tmp[0], 0, n_steps - 1)
-            #
-            # for step_idx in range(n_steps):
-            #     step_idx_new = searchsorted(
-            #         &data_col_asymm_tmp[0], 
-            #         data_col_asymm[step_idx], 
-            #         n_steps)
-            #
-            #     data_col_asymm[step_idx] = data_col_srt[step_idx_new]
+            for step_idx in range(n_steps):
+                data_col_asymm_tmp[step_idx] = data_col_asymm[step_idx]
+
+            quick_sort(&data_col_asymm_tmp[0], 0, n_steps - 1)
+
+            for step_idx in range(n_steps):
+                step_idx_new = searchsorted(
+                    &data_col_asymm_tmp[0], 
+                    data_col_asymm[step_idx], 
+                    n_steps)
+
+                data_col_asymm[step_idx] = data_col_srt[step_idx_new]
+
+            if asymm_iter == (asymm_n_iters - 1):
+                for step_idx in range(n_steps):
+                    data_col_asymm[step_idx] += (
+                        data_col_asymm[step_idx] * 
+                        rand_err_rel[step_idx, col_idx] * 
+                        rand_err_sclr_rel)
+
+                    data_col_asymm[step_idx] += (
+                        rand_err_cnst[step_idx, col_idx] * 
+                        rand_err_sclr_cnst)
 
             asymm_iter += 1
 
@@ -2381,15 +2381,15 @@ cpdef np.ndarray asymmetrize_type_11_ms_cy(
         else:
             # Return new transformed values that do not exist in data.
 
-            for step_idx in range(n_steps):
-                data_col_asymm[step_idx] += (
-                    data_col_asymm[step_idx] * 
-                    rand_err_rel[step_idx, col_idx] * 
-                    rand_err_sclr_rel)
-
-                data_col_asymm[step_idx] += (
-                    rand_err_cnst[step_idx, col_idx] * 
-                    rand_err_sclr_cnst)
+            # for step_idx in range(n_steps):
+            #     data_col_asymm[step_idx] += (
+            #         data_col_asymm[step_idx] * 
+            #         rand_err_rel[step_idx, col_idx] * 
+            #         rand_err_sclr_rel)
+            #
+            #     data_col_asymm[step_idx] += (
+            #         rand_err_cnst[step_idx, col_idx] * 
+            #         rand_err_sclr_cnst)
 
             for step_idx in range(n_steps):
                 out_data[step_idx, col_idx] = data_col_asymm[step_idx]
