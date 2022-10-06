@@ -81,7 +81,8 @@ def get_distance_from_vector(points, beg_vector, end_vector):
     # Length of the vector.
 #     print((d ** 2).sum(axis=1) ** 0.5)
 
-    return np.round(d, 15), np.round(c, 15)
+    # return np.round(d, 15), np.round(c, 15)
+    return d, c
 
 
 def get_asymms_nd(data):

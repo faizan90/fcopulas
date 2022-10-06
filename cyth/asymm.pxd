@@ -9,6 +9,8 @@
 ctypedef double DT_D
 ctypedef unsigned long DT_UL
 
+import numpy as np
+cimport numpy as np
 
 cpdef float asymms_exp
 
@@ -33,3 +35,11 @@ cpdef DT_D get_asymm_2_var(DT_D[:] u, DT_D[:] v, DT_D asymm_2_mean) except +
 
 cpdef DT_D get_asymm_2_skew(
         DT_D[:] u, DT_D[:] v, DT_D asymm_1_mean, DT_D asymm_2_var) except +
+
+cpdef np.ndarray get_distances_from_vector_nd(
+        double[:, ::1] pts,
+        double[::1] vec_beg,
+        double[::1] vec_end,) except +
+
+cpdef np.ndarray get_asymms_nd_v2_raw_cy(
+        double[:, ::1] probs) except +

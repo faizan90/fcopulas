@@ -35,6 +35,8 @@ from .asymm import (
     get_asymm_1_skew,
     get_asymm_2_var,
     get_asymm_2_skew,
+    get_distances_from_vector_nd,
+    get_asymms_nd_v2_raw_cy,
     )
 
 asymms_exp = get_asymms_exp()

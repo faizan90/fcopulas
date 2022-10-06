@@ -34,22 +34,22 @@ def main():
     main_dir = Path(os.getcwd())
     os.chdir(main_dir)
 
-    ts_file = Path(r'P:\Synchronize\IWS\Testings\fourtrans_practice\iaaft\test_wk_157\sim_files\auto_sims_420.csv')
+    ts_file = Path(r"P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa\test_hbv_all_05__mult_prms_search\data_extracted\sim_data_06.csv")
 
     half_window_size = 200
 
-    n_levels = 100
+    n_levels = 1000
     max_shift_exp = 1.0
     max_shift = 20
-    pre_vals_ratio = 0.98
+    pre_vals_ratio = 0.95
     asymm_n_iters = 1
     prob_center = 0.0
-    pre_val_exp = 1.1
-    crt_val_exp = 0.9
+    pre_val_exp = 1.0
+    crt_val_exp = 0.99
     level_thresh_cnst = 100
-    level_thresh_slp = -0.05
+    level_thresh_slp = -0.0
     rand_err_sclr_cnst = 0.01
-    rand_err_sclr_rel = 0.5
+    rand_err_sclr_rel = 0.1
     probs_exp = 1.0
     #==========================================================================
 
@@ -77,7 +77,7 @@ def main():
 
     else:
         # ts_ser = pd.read_csv(ts_file, sep=';', index_col=0).loc['2000-01-01':'2001-12-31', 'q_obs']
-        ts_ser = pd.read_csv(ts_file, sep=';', index_col=0).loc['1961-08-01':'1969-08-01', 'S00000']
+        ts_ser = pd.read_csv(ts_file, sep=';', index_col=0).loc['1964-10-01':'1974-11-29', 'q_obs']
         # ts_ser = pd.read_csv(ts_file, sep=';', index_col=None).loc[:, 'prec']
 
         ref_ser = ts_ser.values
