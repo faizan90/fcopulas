@@ -206,8 +206,68 @@ cpdef np.ndarray get_distances_from_vector_nd(
     return np.asarray(pts_dists)
 
 
+cpdef void fill_probs_dists_v2_cy(
+        const double[:, ::1] probs, 
+        double[:, ::1] probs_dists, 
+        Py_ssize_t asymm_idx) except +:
+
+    cdef:
+        Py_ssize_t i, j, n_probs, n_dims, n_asymms
+
+        double vec_dir_dot
+
+        double[:] vec_beg, vec_end, vec_dir, rel_dists
+
+    n_probs = probs.shape[0]
+    n_dims = probs.shape[1]
+    n_asymms = n_dims + 1
+
+    assert asymm_idx < n_asymms, (asymm_idx, n_asymms)
+
+    vec_beg = np.empty(n_dims, dtype=np.float64)
+    vec_end = np.empty(n_dims, dtype=np.float64)
+    vec_dir = np.empty(n_dims, dtype=np.float64)
+    rel_dists = np.empty(n_probs, dtype=np.float64)
+
+    if asymm_idx < n_dims:
+        for j in range(n_dims):
+
+            if j == asymm_idx:
+                vec_end[j] = 1.0
+
+            else:
+                vec_end[j] = 0.0
+
+            vec_beg[j] = 1.0 - vec_end[j]
+
+    else:
+        for j in range(n_dims):
+            vec_beg[j] = 0.0
+            vec_end[j] = 1.0
+
+    vec_dir_dot = 0.0
+    for j in range(n_dims):
+        vec_dir[j] = vec_end[j] - vec_beg[j]
+        vec_dir_dot += vec_dir[j] ** 2
+
+    for i in range(n_probs):
+
+        rel_dists[i] = 0.0
+        for j in range(n_dims):
+            rel_dists[i] += (probs[i, j] - vec_beg[j]) * vec_dir[j]
+
+        rel_dists[i] /= vec_dir_dot
+
+    for i in range(n_probs):
+        for j in range(n_dims):
+            probs_dists[i, j] = probs[i, j] - (
+                (rel_dists[i] * vec_dir[j]) + vec_beg[j])
+
+    return
+
+
 cpdef np.ndarray get_asymms_nd_v2_raw_cy(
-        double[:, ::1] probs) except +:
+        const double[:, ::1] probs) except +:
 
     cdef:
         Py_ssize_t i, j, k, n_probs, n_dims, n_asymms
@@ -233,14 +293,15 @@ cpdef np.ndarray get_asymms_nd_v2_raw_cy(
 
         if k < n_dims:
             for j in range(n_dims):
-    
+
                 if j == k:
                     vec_end[j] = 1.0
-    
+
                 else:
                     vec_end[j] = 0.0
-    
+
                 vec_beg[j] = 1.0 - vec_end[j]
+
         else:
             for j in range(n_dims):
                 vec_beg[j] = 0.0

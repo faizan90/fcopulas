@@ -32,6 +32,7 @@ from .cyth import (
     get_asymm_2_var,
     get_asymm_2_skew,
     get_distances_from_vector_nd,
+    fill_probs_dists_v2_cy,
     get_asymms_nd_v2_raw_cy,
 
     # Spearman's correlation.

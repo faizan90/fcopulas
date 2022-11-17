@@ -28,6 +28,14 @@ from asymmetrize_test import asymmetrize_type_11_ms_cy
 
 DEBUG_FLAG = False
 
+prms_dict = {
+    'figure.figsize': (15, 10),
+    'figure.dpi': 150,
+    'font.size': 16,
+    }
+
+plt.rcParams.update(prms_dict)
+
 
 def main():
 
@@ -38,23 +46,23 @@ def main():
 
     half_window_size = 200
 
-    n_levels = 1000
+    n_levels = 200
     max_shift_exp = 1.0
     max_shift = 20
-    pre_vals_ratio = 0.95
+    pre_vals_ratio = 0.9
     asymm_n_iters = 1
     prob_center = 0.0
     pre_val_exp = 1.0
-    crt_val_exp = 0.99
-    level_thresh_cnst = 100
+    crt_val_exp = 0.9
+    level_thresh_cnst = 1000
     level_thresh_slp = -0.0
-    rand_err_sclr_cnst = 0.01
-    rand_err_sclr_rel = 0.1
+    rand_err_sclr_cnst = 0.00
+    rand_err_sclr_rel = 0.0
     probs_exp = 1.0
     #==========================================================================
 
-    if False:
-    # if True:
+    # if False:
+    if True:
         rel_dists = np.concatenate((
             np.arange(half_window_size, -1, -1.0,),
             np.arange(1.0, half_window_size + 1.0)))
@@ -95,7 +103,7 @@ def main():
 
     # probs **= 0.5
 
-    # ref_ser = expon.ppf(probs)
+    ref_ser = expon.ppf(probs)
 
     inc = ref_ser.min()
     # inc = probs.min() * 1

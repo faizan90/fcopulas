@@ -41,5 +41,10 @@ cpdef np.ndarray get_distances_from_vector_nd(
         double[::1] vec_beg,
         double[::1] vec_end,) except +
 
+cpdef void fill_probs_dists_v2_cy(
+        const double[:, ::1] probs, 
+        double[:, ::1] probs_dists, 
+        Py_ssize_t asymm_idx) except +
+
 cpdef np.ndarray get_asymms_nd_v2_raw_cy(
-        double[:, ::1] probs) except +
+        const double[:, ::1] probs) except +
